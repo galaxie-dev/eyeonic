@@ -5,7 +5,7 @@ requireAdminLogin();
 
 $totalUsers = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
 $totalOrders = $pdo->query("SELECT COUNT(*) FROM orders")->fetchColumn();
-$totalRevenue = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE status = 'completed'")->fetchColumn();
+// $totalRevenue = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE status = 'completed'")->fetchColumn();
 ?>
 
 <h1>Welcome, <?= $_SESSION['admin_name'] ?>!</h1>
@@ -20,5 +20,6 @@ $totalRevenue = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE status =
     <li><a href="manage_products.php">Manage Products</a></li>
     <li><a href="manage_orders.php">Manage Orders</a></li>
     <li><a href="manage_categories.php">Manage Categories</a></li>
+    <li><a href="product_add.php">Add a Product</a></li>
     <li><a href="logout.php">Logout</a></li>
 </ul>

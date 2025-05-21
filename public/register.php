@@ -15,16 +15,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt = $pdo->prepare("INSERT INTO users (name, email, phone, password_hash, user_role) VALUES (?, ?, ?, ?, 'customer')");
     $success = $stmt->execute([$name, $email, $phone, $password_hash]);
 
-    // if ($success) {
-    //     $verificationLink = "http://yourdomain.com/public/verify_email.php?token=$token";
-    //     $subject = "Verify Your Email";
-    //     $message = "Click the link to verify your email: $verificationLink";
-    //     mail($email, $subject, $message); // Replace with PHPMailer for real usage
-
-    //     redirect('login.php', 'Registration successful! Check your email to verify your account.');
-    // } else {
-    //     $error = "Registration failed.";
-    // }
 }
 ?>
 

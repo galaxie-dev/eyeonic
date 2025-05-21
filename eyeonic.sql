@@ -33,6 +33,9 @@ CREATE TABLE products (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (category_id) REFERENCES categories(id)
 );
+ALTER TABLE products ADD image_path VARCHAR(255) DEFAULT NULL;
+
+
 
 CREATE TABLE product_variants (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -121,4 +124,22 @@ CREATE TABLE admin_logs (
     action TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (admin_id) REFERENCES users(id)
+);
+
+
+CREATE TABLE admins (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    full_name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+INSERT INTO admins (full_name, email, password_hash)
+VALUES (
+    'Admin User',
+    'admin@eyeonic.com',
+    -- hasshed password is admin123
+    '$2y$10$WzDjZkDvjE.EcML5lU5mNeP6JqGnRNEPh8LdCekyRg59aS9py5TuW' 
 );
