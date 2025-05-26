@@ -3,13 +3,13 @@ require_once '../config/database.php';
 require_once 'includes/auth.php';
 requireAdminLogin();
 
-$stmt = $pdo->query("SELECT id, full_name, email, created_at FROM users ORDER BY created_at DESC");
+$stmt = $pdo->query("SELECT id, name, email, created_at FROM users ORDER BY created_at DESC");
 $users = $stmt->fetchAll();
 
 
 $search = $_GET['q'] ?? '';
 if ($search) {
-    $stmt = $pdo->prepare("SELECT * FROM users WHERE full_name LIKE ? OR email LIKE ? ORDER BY created_at DESC");
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE name LIKE ? OR email LIKE ? ORDER BY created_at DESC");
     $stmt->execute(["%$search%", "%$search%"]);
 } else {
     $stmt = $pdo->query("SELECT * FROM users ORDER BY created_at DESC");
@@ -31,7 +31,7 @@ $users = $stmt->fetchAll();
     <?php foreach ($users as $user): ?>
     <tr>
         <td><?= $user['id'] ?></td>
-        <td><?= htmlspecialchars($user['full_name']) ?></td>
+        <td><?= htmlspecialchars($user['name']) ?></td>
         <td><?= htmlspecialchars($user['email']) ?></td>
         <td><?= $user['created_at'] ?></td>
     </tr>

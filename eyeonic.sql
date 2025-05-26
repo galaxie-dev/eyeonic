@@ -18,6 +18,11 @@ CREATE TABLE categories (
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+ALTER TABLE categories
+ADD parent_id INT DEFAULT NULL,
+ADD CONSTRAINT fk_parent_category FOREIGN KEY (parent_id) REFERENCES categories(id) ON DELETE SET NULL;
+
+
 
 CREATE TABLE products (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -34,6 +39,7 @@ CREATE TABLE products (
     FOREIGN KEY (category_id) REFERENCES categories(id)
 );
 ALTER TABLE products ADD image_path VARCHAR(255) DEFAULT NULL;
+ALTER TABLE products ADD updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 
 
 
