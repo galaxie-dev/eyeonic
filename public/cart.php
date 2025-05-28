@@ -3,10 +3,17 @@ include 'header.php';
 session_start();
 require_once '../config/database.php';
 
+// Handle cart updates
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $productId = $_POST['product_id'];
-    $quantity = $_POST['quantity'];
-    $_SESSION['cart'][$productId] = $quantity;
+    if (isset($_POST['update_cart'])) {
+        foreach ($_POST['quantity'] as $productId => $quantity) {
+            $quantity = max(1, (int)$quantity); // Ensure quantity is at least 1
+            $_SESSION['cart'][$productId] = $quantity;
+        }
+    } elseif (isset($_POST['remove_item']) && isset($_POST['product_id'])) {
+        $productId = $_POST['product_id'];
+        unset($_SESSION['cart'][$productId]);
+    }
 }
 
 $cart = $_SESSION['cart'] ?? [];
@@ -29,68 +36,15 @@ $categories = $categoryStmt->fetchAll();
         body {
             font-family: 'Inter', sans-serif;
         }
-        .header-logo svg {
-            width: 24px;
-            height: 24px;
-            color: #111827;
-        }
-        .header-logo-text {
-            font-weight: 600;
-            font-size: 1.125rem;
-            color: #111827;
-            user-select: none;
-        }
-        .nav-link {
-            font-weight: 500;
-            font-size: 0.875rem;
-            color: #4b5563;
-            transition: color 0.2s;
-            text-decoration: none;
-            margin-left: 2rem;
-        }
-        .nav-link:hover {
-            color: #111827;
-        }
-        .btn-signin {
-            display: inline-block;
-            background-color: #111827;
-            color: white;
-            font-weight: 600;
-            font-size: 0.875rem;
-            padding: 0.375rem 1rem;
-            border-radius: 0.375rem;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .btn-signin:hover {
-            background-color: #1f2937;
-        }
-        .icon-button {
-            color: #4b5563;
-            font-size: 1rem;
-            padding: 0.25rem;
-            border-radius: 0.375rem;
-            cursor: pointer;
-            border: none;
-            background: transparent;
-            transition: color 0.2s;
-        }
-        .icon-button:hover,
-        .icon-button:focus {
-            color: #111827;
-            outline: none;
-            box-shadow: 0 0 0 2px #111827;
-        }
         .cart-section {
             max-width: 1200px;
-            margin: 2.5rem auto 0 auto;
+            margin: 2.5rem auto;
             padding: 0 1rem;
         }
         .cart-title {
             font-weight: 600;
             font-size: 1.5rem;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
             color: #111827;
         }
         .cart-empty {
@@ -102,177 +56,228 @@ $categories = $categoryStmt->fetchAll();
             border-radius: 0.375rem;
             box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
         }
-        .cart-items {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-        .cart-item {
+        .cart-table {
+            width: 100%;
+            border-collapse: collapse;
             background: white;
             border-radius: 0.375rem;
             box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
-            padding: 1rem;
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1rem;
+            overflow: hidden;
         }
-        @media (min-width: 640px) {
-            .cart-item {
-                grid-template-columns: 2fr 1fr 1fr;
-                align-items: center;
-            }
+        .cart-table th {
+            text-align: left;
+            padding: 1rem;
+            background-color: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.875rem;
+        }
+        .cart-table td {
+            padding: 1rem;
+            border-top: 1px solid #e5e7eb;
+            vertical-align: middle;
+        }
+        .cart-item-img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 0.25rem;
         }
         .cart-item-name {
             font-weight: 600;
             font-size: 0.875rem;
             color: #111827;
-            margin: 0;
         }
-        .cart-item-details {
-            font-size: 0.75rem;
-            color: #6b7280;
-            margin: 0.5rem 0 0 0;
-        }
-        .cart-item-subtotal {
+        .cart-item-price {
             font-size: 0.875rem;
-            font-weight: 600;
-            color: #111827;
-            margin: 0;
+            color: #6b7280;
+        }
+        .quantity-input {
+            width: 60px;
+            padding: 0.375rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.25rem;
+            text-align: center;
+        }
+        .remove-btn {
+            color: #ef4444;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+        .remove-btn:hover {
+            text-decoration: underline;
         }
         .cart-total {
-            font-weight: 600;
-            font-size: 1.125rem;
-            color: #111827;
-            text-align: right;
+            display: flex;
+            justify-content: flex-end;
             margin-top: 1.5rem;
         }
+        .total-box {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.375rem;
+            box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+            width: 300px;
+        }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        .total-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        .total-amount {
+            font-weight: 600;
+            color: #111827;
+        }
+        .grand-total {
+            font-size: 1.125rem;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 0.75rem;
+            margin-top: 0.75rem;
+        }
         .btn-checkout {
-            display: inline-block;
+            display: block;
+            width: 100%;
             background-color: #2563eb;
             color: white;
             font-weight: 600;
-            font-size: 0.875rem;
-            padding: 0.5rem 1.25rem;
+            padding: 0.75rem;
             border-radius: 0.375rem;
             border: none;
             cursor: pointer;
             transition: background-color 0.2s;
             margin-top: 1rem;
-            text-decoration: none;
-            width: max-content;
-            float: right;
+            text-align: center;
         }
         .btn-checkout:hover {
             background-color: #1d4ed8;
         }
-        footer {
-            border-top: 1px solid #e5e7eb;
-            margin-top: 4rem;
-            padding: 1.5rem 1rem;
-            max-width: 1200px;
-            margin-left: auto;
-            margin-right: auto;
+        .cart-actions {
             display: flex;
-            flex-direction: column;
+            justify-content: space-between;
+            margin-top: 1rem;
+        }
+        .btn-update {
+            background-color: #f3f4f6;
+            color: #111827;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-update:hover {
+            background-color: #e5e7eb;
+        }
+        .btn-continue {
+            color: #2563eb;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
             align-items: center;
-            font-size: 0.625rem;
-            color: #9ca3af;
         }
-        @media (min-width: 640px) {
-            footer {
-                flex-direction: row;
-                justify-content: space-between;
-            }
-        }
-        .footer-links {
-            display: flex;
-            gap: 1.5rem;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-bottom: 0.75rem;
-        }
-        @media (min-width: 640px) {
-            .footer-links {
-                margin-bottom: 0;
-            }
-        }
-        .footer-links a {
-            color: #9ca3af;
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-        .footer-links a:hover {
-            color: #6b7280;
-        }
-        .footer-social {
-            display: flex;
-            gap: 1.5rem;
-            color: #9ca3af;
-        }
-        .footer-social a {
-            color: inherit;
-            text-decoration: none;
-            font-size: 1rem;
-            transition: color 0.2s;
-        }
-        .footer-social a:hover {
-            color: #6b7280;
+        .btn-continue:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
-    <!-- <header>
-        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
-            <div class="flex items-center space-x-2 header-logo">
-                <svg aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
-                    <path d="M2 17l10 5 10-5"></path>
-                    <path d="M2 12l10 5 10-5"></path>
-                </svg>
-                <span class="header-logo-text">Eyeonic</span>
-            </div>
-            <div class="hidden md:flex">
-                <?php foreach ($categories as $category): ?>
-                    <a class="nav-link" href="products.php?category=<?= $category['id'] ?>"><?= htmlspecialchars($category['name']) ?></a>
-                <?php endforeach; ?>
-                <a class="nav-link" href="products.php">All Products</a>
-            </div>
-            <div class="flex items-center space-x-3">
-                <button class="btn-signin hidden sm:inline-block" type="button">Sign In</button>
-                <button aria-label="Search" class="icon-button" type="button"><i class="fas fa-search"></i></button>
-                <button aria-label="Menu" class="icon-button md:hidden" type="button"><i class="fas fa-bars"></i></button>
-            </div>
-        </nav>
-    </header> -->
     <main>
         <section class="cart-section">
-            <h2 class="cart-title">Your Cart</h2>
+            <h2 class="cart-title">Your Shopping Cart</h2>
+            
             <?php if (empty($cart)): ?>
-                <p class="cart-empty">Your cart is empty.</p>
-            <?php else: ?>
-                <div class="cart-items">
-                    <?php
-                    $total = 0;
-                    foreach ($cart as $id => $qty):
-                        $stmt = $pdo->prepare("SELECT * FROM products WHERE id = ?");
-                        $stmt->execute([$id]);
-                        $product = $stmt->fetch();
-                        $subtotal = $product['price'] * $qty;
-                        $total += $subtotal;
-                    ?>
-                        <div class="cart-item">
-                            <h3 class="cart-item-name"><?= htmlspecialchars($product['name']) ?></h3>
-                            <p class="cart-item-details">Qty: <?= $qty ?> | Price: KES <?= number_format($product['price'], 2) ?></p>
-                            <p class="cart-item-subtotal">Subtotal: KES <?= number_format($subtotal, 2) ?></p>
-                        </div>
-                    <?php endforeach; ?>
+                <div class="cart-empty">
+                    <p>Your cart is currently empty.</p>
+                    <a href="products.php" class="btn-continue" style="margin-top: 1rem;">
+                        <i class="fas fa-arrow-left mr-2"></i> Continue Shopping
+                    </a>
                 </div>
-                <h3 class="cart-total">Total: KES <?= number_format($total, 2) ?></h3>
-                <a href="checkout.php" class="btn-checkout">Proceed to Checkout</a>
+            <?php else: ?>
+                <form method="POST" action="">
+                    <table class="cart-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>Subtotal</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php
+                            $total = 0;
+                            foreach ($cart as $id => $qty):
+                                $stmt = $pdo->prepare("SELECT * FROM products WHERE id = ?");
+                                $stmt->execute([$id]);
+                                $product = $stmt->fetch();
+                                $subtotal = $product['price'] * $qty;
+                                $total += $subtotal;
+                                $imagePath = !empty($product['image']) ? '../' . $product['image'] : '../assets/no-image.png';
+                            ?>
+                                <tr>
+                                    <td>
+                                        <div style="display: flex; align-items: center; gap: 1rem;">
+                                            <img src="<?= htmlspecialchars($imagePath) ?>" alt="<?= htmlspecialchars($product['name']) ?>" class="cart-item-img">
+                                            <div>
+                                                <div class="cart-item-name"><?= htmlspecialchars($product['name']) ?></div>
+                                                <div class="cart-item-price">KES <?= number_format($product['price'], 2) ?></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>KES <?= number_format($product['price'], 2) ?></td>
+                                    <td>
+                                        <input type="number" name="quantity[<?= $id ?>]" value="<?= $qty ?>" min="1" class="quantity-input">
+                                    </td>
+                                    <td>KES <?= number_format($subtotal, 2) ?></td>
+                                    <td>
+                                        <button type="submit" name="remove_item" value="1" class="remove-btn">
+                                            <input type="hidden" name="product_id" value="<?= $id ?>">
+                                            <i class="fas fa-trash"></i> Remove
+                                        </button>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                    
+                    <div class="cart-actions">
+                        <a href="products.php" class="btn-continue">
+                            <i class="fas fa-arrow-left mr-2"></i> Continue Shopping
+                        </a>
+                        <button type="submit" name="update_cart" class="btn-update">
+                            <i class="fas fa-sync-alt mr-2"></i> Update Cart
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="cart-total">
+                    <div class="total-box">
+                        <div class="total-row">
+                            <span class="total-label">Subtotal</span>
+                            <span class="total-amount">KES <?= number_format($total, 2) ?></span>
+                        </div>
+                        <div class="total-row">
+                            <span class="total-label">Shipping</span>
+                            <span class="total-amount">Calculated at checkout</span>
+                        </div>
+                        <div class="total-row grand-total">
+                            <span class="total-label">Total</span>
+                            <span class="total-amount">KES <?= number_format($total, 2) ?></span>
+                        </div>
+                        <a href="checkout.php" class="btn-checkout">Proceed to Checkout</a>
+                    </div>
+                </div>
             <?php endif; ?>
         </section>
     </main>
-  
+    <?php include 'footer.php'; ?>
 </body>
 </html>
-  <?php include 'footer.php'; ?>

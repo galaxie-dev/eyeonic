@@ -10,7 +10,12 @@ if (!$id) {
     exit;
 }
 
-$stmt = $pdo->prepare("SELECT * FROM products WHERE id = ?");
+$stmt = $pdo->prepare("
+    SELECT products.*, categories.name as category_name 
+    FROM products 
+    LEFT JOIN categories ON products.category_id = categories.id 
+    WHERE products.id = ?
+");
 $stmt->execute([$id]);
 $product = $stmt->fetch();
 
@@ -24,6 +29,7 @@ if (!$product) {
 $categoryStmt = $pdo->query("SELECT * FROM categories");
 $categories = $categoryStmt->fetchAll();
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -237,8 +243,15 @@ $categories = $categoryStmt->fetchAll();
             <div class="product-detail">
                 <img alt="<?= htmlspecialchars($product['name']) ?>" class="product-image" height="400" src="<?php echo !empty($product['image_path']) ? '../' . htmlspecialchars($product['image_path']) : '../assets/no-image.png'; ?>" width="400"/>
                 <div class="details">
+                    <p><?= htmlspecialchars($product['name'])?></p>
+                    <p>By <?= htmlspecialchars($product['brand'])?></p>
                     <p class="product-price">KES <?= number_format($product['price'], 2) ?></p>
                     <p class="product-desc"><?= nl2br(htmlspecialchars($product['description'])) ?></p>
+                    <p>By <?= htmlspecialchars($product['brand'])?></p>       
+                    <p>Category: <?= htmlspecialchars($product['category_name'])?></p>   
+                    
+                    
+                    <?php echo date('M j, Y', strtotime($product['created_at'])); ?>              
                     <form action="cart.php" method="post" class="product-form">
                         <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
                         <label for="qty">Quantity:</label>

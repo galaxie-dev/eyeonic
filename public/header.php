@@ -13,9 +13,12 @@
             margin: 0;
         }
         header {
+            /* background: linear-gradient(to right, rgba(0,0,0,0.6), transparent); */
             background-color: transparent;
             padding: 1rem 1.5rem;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+            width: 100%;
         }
         .header-container {
             max-width: 1200px;

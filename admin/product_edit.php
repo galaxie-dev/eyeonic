@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $image_url = $product['image_url'];
     $image_path = $product['image_path'];
     if (!empty($_FILES['image']['name'])) {
-        $targetDir = "../images/";
+        $targetDir = "../uploads/";
         $fileName = basename($_FILES['image']['name']);
         $targetFile = $targetDir . uniqid() . '_' . $fileName;
         $imageFileType = strtolower(pathinfo($targetFile, PATHINFO_EXTENSION));
