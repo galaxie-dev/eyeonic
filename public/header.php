@@ -13,7 +13,7 @@
             margin: 0;
         }
         header {
-            background-color: #2563eb;
+            background-color: transparent;
             padding: 1rem 1.5rem;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
@@ -33,13 +33,14 @@
         .header-logo svg {
             width: 28px;
             height: 28px;
-            color: #ffffff;
+            color: #2563eb;
         }
         .header-logo-text {
             font-weight: 800;
             font-size: 1.5rem;
-            color: #ffffff;
+            color: #2563eb;
             user-select: none;
+            
         }
         .header-nav {
             display: none;
@@ -55,7 +56,7 @@
         .header-nav a {
             font-weight: 600;
             font-size: 1rem;
-            color: #ffffff;
+            color: #2563eb;
             text-decoration: none;
             transition: color 0.2s;
         }
