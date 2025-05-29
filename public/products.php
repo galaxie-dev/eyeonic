@@ -53,6 +53,45 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
     }
     return round((($originalPrice - $discountPrice) / $originalPrice) * 100);
 }
+
+
+
+
+// Handle search query
+$search = $_GET['q'] ?? '';
+
+if ($search) {
+    // Search for products that match name, description, or category name
+    $stmt = $pdo->prepare("
+        SELECT p.*, c.name AS category_name
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+        WHERE p.name LIKE ? 
+           OR p.description LIKE ?
+           OR c.name LIKE ?
+        ORDER BY p.created_at DESC
+    ");
+    $searchTerm = "%$search%";
+    $stmt->execute([$searchTerm, $searchTerm, $searchTerm]);
+} else {
+    // Default query when no search term
+    $stmt = $pdo->query("
+        SELECT p.*, c.name AS category_name
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+        ORDER BY p.created_at DESC
+    ");
+}
+
+$products = $stmt->fetchAll();
+
+// Display results
+if (empty($products)) {
+    echo '<p class="empty-message">No products found' . ($search ? ' matching "' . htmlspecialchars($search) . '"' : '') . '.</p>';
+} else {
+    // Display your products table here
+    // ...
+}
 ?>
 
 <style>
@@ -444,7 +483,13 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
 
 <main>
     <section class="products-section">
+         <form method="get" class="search-form">
+            <input type="text" name="q" placeholder="Search for eyewear..." 
+                   value="<?= htmlspecialchars($_GET['q'] ?? '') ?>">
+            <button type="submit">Search</button>
+        </form>
         <h2 class="products-title"><?php echo $categoryId ? htmlspecialchars($categories[array_search($categoryId, array_column($categories, 'id'))]['name'] ?? 'Products') : 'All Products'; ?></h2>
+       
         <?php if (empty($products)): ?>
             <p class="no-products">No products found.</p>
         <?php else: ?>

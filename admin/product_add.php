@@ -10,32 +10,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = $_POST['name'];
     $desc = $_POST['description'];
     $price = $_POST['price'];
+    $discount_price = !empty($_POST['discount_price']) ? $_POST['discount_price'] : null;
+    $brand = $_POST['brand'];
     $category_id = $_POST['category_id'];
+    $stock = $_POST['stock'];
+    $is_featured = isset($_POST['is_featured']) ? 1 : 0;
     $image_path = null;
+    $image_url = null;
 
-    if (!empty($_FILES['image']['name'])) {
-        $target_dir = "../uploads/";
-        if (!is_dir($target_dir)) mkdir($target_dir, 0755, true);
+    // Validate inputs
+    $errors = [];
+    if (empty($name)) $errors[] = "Product name is required";
+    if ($price <= 0) $errors[] = "Price must be greater than 0";
+    if ($discount_price !== null && $discount_price >= $price) $errors[] = "Discount price must be less than regular price";
+    if ($stock < 0) $errors[] = "Stock cannot be negative";
 
-        $image_name = time() . '_' . basename($_FILES["image"]["name"]);
-        $target_tmp = $_FILES["image"]["tmp_name"];
-        $target_file = $target_dir . $image_name;
+    if (empty($errors)) {
+        // Handle image upload
+        if (!empty($_FILES['image']['name'])) {
+            $target_dir = "../uploads/";
+            if (!is_dir($target_dir)) mkdir($target_dir, 0755, true);
 
-        if (move_uploaded_file($target_tmp, $target_file)) {
-            $resized_path = $target_dir . "resized_" . $image_name;
+            $image_name = time() . '_' . basename($_FILES["image"]["name"]);
+            $target_tmp = $_FILES["image"]["tmp_name"];
+            $target_file = $target_dir . $image_name;
 
-            if (resizeAndCropImage($target_file, $resized_path)) {
-                unlink($target_file);
-                $image_path = "uploads/resized_" . $image_name; // Relative path for DB
+            if (move_uploaded_file($target_tmp, $target_file)) {
+                $resized_path = $target_dir . "resized_" . $image_name;
+
+                if (resizeAndCropImage($target_file, $resized_path)) {
+                    unlink($target_file);
+                    $image_path = "uploads/resized_" . $image_name; // Relative path for DB
+                    $image_url = $image_path; // Using the same path for both fields
+                }
             }
         }
+
+        $stmt = $pdo->prepare("INSERT INTO products (name, description, price, discount_price, brand, category_id, stock, image_url, image_path, is_featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$name, $desc, $price, $discount_price, $brand, $category_id, $stock, $image_url, $image_path, $is_featured]);
+
+        header('Location: manage_products.php');
+        exit;
     }
-
-    $stmt = $pdo->prepare("INSERT INTO products (name, description, price, category_id, image_path) VALUES (?, ?, ?, ?, ?)");
-    $stmt->execute([$name, $desc, $price, $category_id, $image_path]);
-
-    header('Location: manage_products.php');
-    exit;
 }
 ?>
 
@@ -179,41 +195,95 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border-radius: 4px;
             border: 1px solid #ddd;
         }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+        
+        .error-message {
+            color: var(--accent);
+            background-color: rgba(244, 63, 94, 0.1);
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 3px solid var(--accent);
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>Add New Product</h2>
         
+        <?php if (!empty($errors)): ?>
+            <div class="error-message">
+                <strong>Please fix the following errors:</strong>
+                <ul>
+                    <?php foreach ($errors as $error): ?>
+                        <li><?= htmlspecialchars($error) ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        <?php endif; ?>
+        
         <form method="post" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="name">Product Name</label>
-                <input type="text" id="name" name="name" required placeholder="Enter product name">
+                <input type="text" id="name" name="name" required placeholder="Enter product name" value="<?= htmlspecialchars($_POST['name'] ?? '') ?>">
             </div>
             
             <div class="form-group">
                 <label for="description">Description</label>
-                <textarea id="description" name="description" required placeholder="Enter product description"></textarea>
+                <textarea id="description" name="description" required placeholder="Enter product description"><?= htmlspecialchars($_POST['description'] ?? '') ?></textarea>
             </div>
             
             <div class="form-group">
                 <label for="price">Price (KES)</label>
-                <input type="number" id="price" name="price" step="0.01" min="0" required placeholder="Enter price">
+                <input type="number" id="price" name="price" step="0.01" min="0" required placeholder="Enter price" value="<?= htmlspecialchars($_POST['price'] ?? '') ?>">
+            </div>
+            
+            <div class="form-group">
+                <label for="discount_price">Discount Price (KES, optional)</label>
+                <input type="number" id="discount_price" name="discount_price" step="0.01" min="0" placeholder="Enter discount price" value="<?= htmlspecialchars($_POST['discount_price'] ?? '') ?>">
+            </div>
+            
+            <div class="form-group">
+                <label for="brand">Brand</label>
+                <input type="text" id="brand" name="brand" required placeholder="Enter brand" value="<?= htmlspecialchars($_POST['brand'] ?? '') ?>">
             </div>
             
             <div class="form-group">
                 <label for="category_id">Category</label>
                 <select id="category_id" name="category_id" required>
                     <?php foreach ($categories as $cat): ?>
-                        <option value="<?= $cat['id'] ?>"><?= htmlspecialchars($cat['name']) ?></option>
+                        <option value="<?= $cat['id'] ?>" <?= isset($_POST['category_id']) && $_POST['category_id'] == $cat['id'] ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($cat['name']) ?>
+                        </option>
                     <?php endforeach; ?>
                 </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="stock">Stock Quantity</label>
+                <input type="number" id="stock" name="stock" min="0" required placeholder="Enter stock quantity" value="<?= htmlspecialchars($_POST['stock'] ?? 0) ?>">
             </div>
             
             <div class="form-group file-upload">
                 <label for="image" class="file-upload-label">Choose Product Image</label>
                 <input type="file" id="image" name="image" accept="image/*">
                 <img id="image-preview" class="preview-image" src="#" alt="Preview">
+            </div>
+            
+            <div class="form-group">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="is_featured" name="is_featured" value="1" <?= isset($_POST['is_featured']) ? 'checked' : '' ?>>
+                    <label for="is_featured">Feature this product</label>
+                </div>
             </div>
             
             <button type="submit" class="btn">Add Product</button>

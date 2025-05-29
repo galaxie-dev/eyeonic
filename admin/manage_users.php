@@ -5,10 +5,10 @@ requireAdminLogin();
 
 $search = $_GET['q'] ?? '';
 if ($search) {
-    $stmt = $pdo->prepare("SELECT * FROM users WHERE name LIKE ? OR email LIKE ? ORDER BY created_at DESC");
+    $stmt = $pdo->prepare("SELECT id, name, email, phone, address, city, zip_code, country, user_role, created_at FROM users WHERE name LIKE ? OR email LIKE ? ORDER BY created_at DESC");
     $stmt->execute(["%$search%", "%$search%"]);
 } else {
-    $stmt = $pdo->query("SELECT * FROM users ORDER BY created_at DESC");
+    $stmt = $pdo->query("SELECT id, name, email, phone, address, city, zip_code, country, user_role, created_at FROM users ORDER BY created_at DESC");
 }
 $users = $stmt->fetchAll();
 ?>
@@ -133,6 +133,12 @@ $users = $stmt->fetchAll();
                     <th>ID</th>
                     <th>Name</th>
                     <th>Email</th>
+                    <th>Phone</th>
+                    <th>Address</th>
+                    <th>City</th>
+                    <th>Zip Code</th>
+                    <th>Country</th>
+                    <th>Role</th>
                     <th>Registered</th>
                 </tr>
             </thead>
@@ -142,6 +148,12 @@ $users = $stmt->fetchAll();
                     <td><?= $user['id'] ?></td>
                     <td><?= htmlspecialchars($user['name']) ?></td>
                     <td><?= htmlspecialchars($user['email']) ?></td>
+                    <td><?= htmlspecialchars($user['phone'] ?? '') ?></td>
+                    <td><?= htmlspecialchars($user['address'] ?? '') ?></td>
+                    <td><?= htmlspecialchars($user['city'] ?? '') ?></td>
+                    <td><?= htmlspecialchars($user['zip_code'] ?? '') ?></td>
+                    <td><?= htmlspecialchars($user['country'] ?? '') ?></td>
+                    <td><?= htmlspecialchars($user['user_role']) ?></td>
                     <td><?= date('M j, Y', strtotime($user['created_at'])) ?></td>
                 </tr>
                 <?php endforeach; ?>
