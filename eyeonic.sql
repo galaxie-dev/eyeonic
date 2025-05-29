@@ -93,6 +93,10 @@ CREATE TABLE order_items (
     FOREIGN KEY (variant_id) REFERENCES product_variants(id)
 );
 
+ALTER TABLE orders MODIFY COLUMN admin_comment TEXT DEFAULT NULL;
+ALTER TABLE orders MODIFY COLUMN order_status ENUM('pending', 'approved', 'declined') DEFAULT 'pending';
+ALTER TABLE orders ADD COLUMN delivery_fee DECIMAL(10, 2);
+
 CREATE TABLE payments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     order_id INT,

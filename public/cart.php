@@ -422,7 +422,7 @@ $categories = $categoryStmt->fetchAll();
                             <span class="total-label">Total</span>
                             <span class="total-amount">KES <?= number_format($total, 2) ?></span>
                         </div>
-                        <a href="payment.php" class="btn-checkout">Proceed to Checkout</a>
+                        <a href="place_order.php" class="btn-checkout">Proceed Order</a>
                     </div>
                 </div>
             <?php endif; ?>

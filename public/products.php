@@ -1,6 +1,7 @@
 <?php
 include 'header.php';
 require_once '../config/database.php';
+session_start();
 
 $categoryId = $_GET['category'] ?? null;
 
