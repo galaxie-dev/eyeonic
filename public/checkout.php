@@ -3,7 +3,7 @@ require_once '../config/database.php';
 session_start();
 include 'header.php';
 
-// Verify order exists and belongs to the user
+// Verify IF order exists and IT belongs to the user
 if (!isset($_GET['order_id']) || !isset($_SESSION['user_id'])) {
     header('Location: cart.php');
     exit;
