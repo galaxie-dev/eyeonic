@@ -3,18 +3,18 @@ require_once '../config/database.php';
 session_start();
 include 'header.php';
 
-// Verify order is approved
-if (!isset($_GET['order_id'])) {
+// Verify order exists and belongs to the user
+if (!isset($_GET['order_id']) || !isset($_SESSION['user_id'])) {
     header('Location: cart.php');
     exit;
 }
 
-$orderId = $_GET['order_id'];
+$orderId = (int)$_GET['order_id'];
 $stmt = $pdo->prepare("
     SELECT o.*, u.name, u.email, u.phone 
     FROM orders o 
     JOIN users u ON o.user_id = u.id 
-    WHERE o.id = ? AND o.status = 'approved' AND o.user_id = ?
+    WHERE o.id = ? AND o.user_id = ?
 ");
 $stmt->execute([$orderId, $_SESSION['user_id']]);
 $order = $stmt->fetch();
@@ -35,47 +35,139 @@ $stmt->execute([$orderId]);
 $items = $stmt->fetchAll();
 ?>
 
-<h2>Complete Payment</h2>
-<div>
-    <p><strong>Order ID:</strong> <?= $order['id'] ?></p>
-    <p><strong>Name:</strong> <?= htmlspecialchars($order['name']) ?></p>
-    <p><strong>Email:</strong> <?= htmlspecialchars($order['email']) ?></p>
-    <p><strong>Phone:</strong> <?= htmlspecialchars($order['phone']) ?></p>
-    <p><strong>Delivery Address:</strong> <?= htmlspecialchars($order['address']) ?></p>
-    
-    <h3>Order Summary</h3>
-    <ul>
-        <?php foreach ($items as $item): ?>
-            <li>
-                <?= htmlspecialchars($item['name']) ?> - 
-                <?= $item['quantity'] ?> x KES <?= number_format($item['price'], 2) ?>
-            </li>
-        <?php endforeach; ?>
-    </ul>
-    <p><strong>Subtotal:</strong> KES <?= number_format($order['total_amount'] - $order['delivery_fee'], 2) ?></p>
-    <p><strong>Delivery Fee:</strong> KES <?= number_format($order['delivery_fee'], 2) ?></p>
-    <p><strong>Total:</strong> KES <?= number_format($order['total_amount'], 2) ?></p>
-    
-    <h3>Payment Methods</h3>
-    <form method="post" action="process_payment.php">
-        <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
-        
-        <div>
-            <input type="radio" name="payment_method" value="mpesa" id="mpesa" checked>
-            <label for="mpesa">M-Pesa</label>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation - Eyeonic</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .confirmation-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .confirmation-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 1.5rem;
+        }
+        .order-details p {
+            margin-bottom: 0.5rem;
+            color: #374151;
+        }
+        .order-items {
+            margin: 1.5rem 0;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 1rem;
+        }
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .order-total {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e5e7eb;
+            font-weight: 600;
+        }
+        .btn-continue {
+            display: inline-block;
+            margin-top: 1rem;
+            color: #2563eb;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .btn-continue:hover {
+            text-decoration: underline;
+        }
+        .payment-form {
+            margin-top: 2rem;
+        }
+        .payment-form label {
+            margin-right: 1rem;
+            margin-bottom: 0.5rem;
+            display: inline-block;
+        }
+        .btn-payment {
+            background-color: #2563eb;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 1rem;
+        }
+        .btn-payment:hover {
+            background-color: #1d4ed8;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <div class="confirmation-container">
+            <h2 class="confirmation-title">Order Confirmation</h2>
+            <div class="order-details">
+                <p><strong>Order ID:</strong> <?= htmlspecialchars($order['id']) ?></p>
+                <p><strong>Name:</strong> <?= htmlspecialchars($order['name']) ?></p>
+                <p><strong>Email:</strong> <?= htmlspecialchars($order['email']) ?></p>
+                <p><strong>Phone:</strong> <?= htmlspecialchars($order['phone']) ?></p>
+                <p><strong>Delivery Address:</strong> <?= htmlspecialchars($order['shipping_address']) ?></p>
+                
+                <div class="order-items">
+                    <h3>Order Summary</h3>
+                    <?php foreach ($items as $item): ?>
+                        <div class="order-item">
+                            <span><?= htmlspecialchars($item['name']) ?> x <?= $item['quantity'] ?></span>
+                            <span>KES <?= number_format($item['price'] * $item['quantity'], 2) ?></span>
+                        </div>
+                    <?php endforeach; ?>
+                    <div class="order-total">
+                        <span>Subtotal:</span>
+                        <span>KES <?= number_format($order['total'] - $order['delivery_fee'], 2) ?></span>
+                    </div>
+                    <div class="order-total">
+                        <span>Delivery Fee:</span>
+                        <span>KES <?= number_format($order['delivery_fee'], 2) ?></span>
+                    </div>
+                    <div class="order-total">
+                        <span>Total:</span>
+                        <span>KES <?= number_format($order['total'], 2) ?></span>
+                    </div>
+                </div>
+                
+                <h3>Payment Methods</h3>
+                <form method="post" action="process_payment.php" class="payment-form">
+                    <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
+                    <div>
+                        <input type="radio" name="payment_method" value="mpesa" id="mpesa" checked>
+                        <label for="mpesa">M-Pesa</label>
+                    </div>
+                    <div>
+                        <input type="radio" name="payment_method" value="card" id="card">
+                        <label for="card">Credit/Debit Card</label>
+                    </div>
+                    <button type="submit" class="btn-payment">Proceed to Payment</button>
+                </form>
+                
+                <a href="products.php" class="btn-continue">
+                    <i class="fas fa-arrow-left mr-2"></i>Continue Shopping
+                </a>
+            </div>
         </div>
-        <div>
-            <input type="radio" name="payment_method" value="card" id="card">
-            <label for="card">Credit/Debit Card</label>
-        </div>
-        
-        <button type="submit">Proceed to Payment</button>
-    </form>
-</div>
-
-<?php include 'footer.php'; ?>
-
-
-
-
-
+    </main>
+    
+    <?php include 'footer.php'; ?>
+</body>
+</html>

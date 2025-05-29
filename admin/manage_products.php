@@ -11,154 +11,238 @@ $stmt = $pdo->prepare("
 ");
 $stmt->execute();
 $products = $stmt->fetchAll();
-
-
 ?>
 
-<style>
-    .products-section {
-        max-width: 1200px;
-        margin: 2.5rem auto;
-        padding: 0 1rem;
-    }
-    .products-title {
-        font-weight: 600;
-        font-size: 1.5rem;
-        color: #111827;
-        margin-bottom: 1rem;
-    }
-    .action-buttons {
-        display: flex;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-    }
-    .btn {
-        display: inline-block;
-        font-weight: 600;
-        font-size: 0.875rem;
-        padding: 0.5rem 1rem;
-        border-radius: 0.375rem;
-        text-decoration: none;
-        transition: background-color 0.2s;
-    }
-    .btn-primary {
-        background-color: #2563eb;
-        color: white;
-    }
-    .btn-primary:hover {
-        background-color: #1d4ed8;
-    }
-    .btn-secondary {
-        background-color: #6b7280;
-        color: white;
-    }
-    .btn-secondary:hover {
-        background-color: #4b5563;
-    }
-    .products-table {
-        width: 100%;
-        border-collapse: collapse;
-        background: white;
-        border-radius: 0.375rem;
-        box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
-        overflow-x: auto;
-    }
-    .products-table th, .products-table td {
-        padding: 0.75rem;
-        text-align: left;
-        font-size: 0.875rem;
-        color: #111827;
-    }
-    .products-table th {
-        background-color: #f9fafb;
-        font-weight: 600;
-    }
-    .products-table tr {
-        border-bottom: 1px solid #e5e7eb;
-    }
-    .products-table tr:last-child {
-        border-bottom: none;
-    }
-    .product-image {
-        width: 50px;
-        height: 50px;
-        object-fit: contain;
-        border-radius: 0.25rem;
-    }
-    .action-links a {
-        color: #2563eb;
-        text-decoration: none;
-        margin-right: 0.5rem;
-        transition: color 0.2s;
-    }
-    .action-links a:hover {
-        color: #1d4ed8;
-    }
-    .action-links .delete {
-        color: #dc2626;
-    }
-    .action-links .delete:hover {
-        color: #b91c1c;
-    }
-</style>
-
-<main>
-    <section class="products-section">
-        <h2 class="products-title">Manage Products</h2>
-        <div class="action-buttons">
-            <a href="product_add.php" class="btn btn-primary">+ Add New Product</a>
-            <a href="dashboard.php" class="btn btn-secondary">← Back to Dashboard</a>
-        </div>
-        <?php if (empty($products)): ?>
-            <p style="text-align: center; color: #6b7280; font-size: 1rem;">No products found.</p>
-        <?php else: ?>
-            <div class="products-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Description</th>
-                            <th>Price (KES)</th>
-                            <th>Discount Price</th>
-                            <th>Brand</th>
-                            <th>Category</th>
-                            <th>Stock</th>
-                            <th>Image</th>
-                            <th>Featured</th>
-                            <th>Created At</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($products as $product): ?>
-                            <tr>
-                                <td><?= $product['id'] ?></td>
-                                <td><?= htmlspecialchars($product['name']) ?></td>
-                                <td><?= htmlspecialchars(substr($product['description'] ?? '', 0, 50)) . (strlen($product['description'] ?? '') > 50 ? '...' : '') ?></td>
-                                <td><?= number_format($product['price'], 2) ?></td>
-                                <td><?= $product['discount_price'] ? number_format($product['discount_price'], 2) : '-' ?></td>
-                                <td><?= htmlspecialchars($product['brand']) ?></td>
-                                <td><?= htmlspecialchars($product['category_name'] ?? 'Uncategorized') ?></td>
-                                <td><?= $product['stock'] ?></td>
-                                <td>
-                                    <?php
-                                    $imagePath = !empty($product['image_url']) ? '../' . htmlspecialchars($product['image_url']) : (!empty($product['image_path']) ? '../' . htmlspecialchars($product['image_path']) : '../assets/no-image.png');
-                                    ?>
-                                    <img src="<?= $imagePath ?>" alt="<?= htmlspecialchars($product['name']) ?>" class="product-image">
-                                </td>
-                                <td><?= $product['is_featured'] ? 'Yes' : 'No' ?></td>
-                                <td><?= date('F j, Y', strtotime($product['created_at'])) ?></td>
-                                <td class="action-links">
-                                    <a href="product_edit.php?id=<?= $product['id'] ?>">Edit</a> |
-                                    <a href="product_delete.php?id=<?= $product['id'] ?>" class="delete" onclick="return confirm('Are you sure you want to delete this product?')">Delete</a>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Products - Admin Panel</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-light: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --secondary: #e0f2fe;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --accent: #f43f5e;
+            --success: #10b981;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--light);
+            color: var(--dark);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        h2 {
+            color: var(--primary-dark);
+            margin: 0;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .btn-secondary {
+            background-color: #6b7280;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #4b5563;
+        }
+        
+        .products-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .products-table th,
+        .products-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .products-table th {
+            background-color: var(--primary);
+            color: white;
+            font-weight: 500;
+        }
+        
+        .products-table tr:hover {
+            background-color: var(--secondary);
+        }
+        
+        .product-image {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        
+        .action-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            margin-right: 10px;
+            transition: color 0.3s;
+        }
+        
+        .action-link:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+        
+        .action-link.delete {
+            color: var(--accent);
+        }
+        
+        .action-link.delete:hover {
+            color: #dc2626;
+        }
+        
+        .empty-message {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+            font-size: 16px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        
+        .featured-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            background-color: var(--success);
+            color: white;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Manage Products</h2>
+            <div>
+                <a href="product_add.php" class="btn">+ Add New Product</a>
+                <a href="dashboard.php" class="btn btn-secondary">← Dashboard</a>
             </div>
+        </div>
+        
+        <?php if (empty($products)): ?>
+            <div class="empty-message">
+                <p>No products found. Add your first product to get started.</p>
+                <a href="product_add.php" class="btn">Add Product</a>
+            </div>
+        <?php else: ?>
+            <table class="products-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Price</th>
+                        <th>Category</th>
+                        <th>Image</th>
+                        <th>Featured</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($products as $product): ?>
+                        <tr>
+                            <td><?= $product['id'] ?></td>
+                            <td>
+                                <?= htmlspecialchars($product['name']) ?>
+                                <div style="font-size: 12px; color: #6b7280;">
+                                    <?= htmlspecialchars(substr($product['description'] ?? '', 0, 50)) . (strlen($product['description'] ?? '') > 50 ? '...' : '') ?>
+                                </div>
+                            </td>
+                            <td>
+                                <strong>KES <?= number_format($product['price'], 2) ?></strong>
+                                <?php if ($product['discount_price']): ?>
+                                    <div style="font-size: 12px; color: var(--accent);">
+                                        <s>KES <?= number_format($product['discount_price'], 2) ?></s>
+                                    </div>
+                                <?php endif; ?>
+                            </td>
+                            <td><?= htmlspecialchars($product['category_name'] ?? 'Uncategorized') ?></td>
+                            <td>
+                                <?php
+                                $imagePath = !empty($product['image_url']) ? '../' . htmlspecialchars($product['image_url']) : 
+                                            (!empty($product['image_path']) ? '../' . htmlspecialchars($product['image_path']) : 
+                                            '../assets/no-image.png');
+                                ?>
+                                <img src="<?= $imagePath ?>" alt="<?= htmlspecialchars($product['name']) ?>" class="product-image">
+                            </td>
+                            <td>
+                                <?php if ($product['is_featured']): ?>
+                                    <span class="featured-badge">Featured</span>
+                                <?php else: ?>
+                                    -
+                                <?php endif; ?>
+                            </td>
+                            <td><?= date('M j, Y', strtotime($product['created_at'])) ?></td>
+                            <td>
+                                <a href="product_edit.php?id=<?= $product['id'] ?>" class="action-link">Edit</a>
+                                <a href="product_delete.php?id=<?= $product['id'] ?>" class="action-link delete" 
+                                   onclick="return confirm('Are you sure you want to delete this product?')">Delete</a>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
         <?php endif; ?>
-    </section>
-</main>
-
+        
+        <a href="dashboard.php" class="back-link">← Back to Dashboard</a>
+    </div>
+</body>
+</html>

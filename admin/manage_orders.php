@@ -64,97 +64,227 @@ function getOrderItems($pdo, $orderId) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Orders - Admin Panel</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .order-details { background-color: #f9f9f9; padding: 10px; margin-top: 5px; }
-        .status-pending { color: #ff9800; font-weight: bold; }
-        .status-approved { color: #4caf50; font-weight: bold; }
-        .status-declined { color: #f44336; font-weight: bold; }
-        .message { padding: 10px; margin: 10px 0; border-radius: 4px; }
-        .success { background-color: #dff0d8; color: #3c763d; }
+        :root {
+            --primary: #2563eb;
+            --primary-light: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --secondary: #e0f2fe;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --accent: #f43f5e;
+            --success: #10b981;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--light);
+            color: var(--dark);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h2 {
+            color: var(--primary-dark);
+            margin-top: 0;
+        }
+        
+        .message {
+            padding: 12px 15px;
+            margin: 0 0 20px 0;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        
+        .success {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border-left: 4px solid var(--success);
+        }
+        
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        .orders-table th, 
+        .orders-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .orders-table th {
+            background-color: var(--primary);
+            color: white;
+            font-weight: 500;
+        }
+        
+        .order-details {
+            background-color: white;
+            padding: 15px;
+            margin-top: 5px;
+            border-radius: 0 0 6px 6px;
+            border: 1px solid #e2e8f0;
+            border-top: none;
+        }
+        
+        .status-pending { color: #f59e0b; }
+        .status-processing { color: #3b82f6; }
+        .status-approved { color: var(--success); }
+        .status-declined { color: var(--accent); }
+        .status-shipped { color: #8b5cf6; }
+        .status-delivered { color: #10b981; }
+        .status-cancelled { color: #64748b; }
+        
+        .status-select {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+        
+        .admin-comment {
+            width: 100%;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            min-height: 60px;
+            margin-bottom: 8px;
+            font-family: inherit;
+        }
+        
+        .update-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+            width: 100%;
+        }
+        
+        .update-btn:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        
+        .items-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 15px 0;
+        }
+        
+        .items-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .items-list li:last-child {
+            border-bottom: none;
+        }
     </style>
 </head>
 <body>
-    <h2>Manage Orders</h2>
-    
-    <?php if (isset($_SESSION['admin_message'])): ?>
-        <div class="message success"><?= $_SESSION['admin_message'] ?></div>
-        <?php unset($_SESSION['admin_message']); ?>
-    <?php endif; ?>
-    
-    <table>
-        <thead>
-            <tr>
-                <th>Order ID</th>
-                <th>User</th>
-                <th>Amount</th>
-                <th>Status</th>
-                <th>Date</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($orders as $order): ?>
-            <tr>
-                <td>#<?= $order['id'] ?></td>
-                <td>
-                    <strong><?= htmlspecialchars($order['user_name']) ?></strong><br>
-                    <?= htmlspecialchars($order['email']) ?><br>
-                    <?= htmlspecialchars($order['phone']) ?>
-                </td>
-                <td>
-                    <strong>KES <?= number_format($order['total'], 2) ?></strong>
-                </td>
-                <td>
-                    <span class="status-<?= $order['status'] ?>">
-                        <?= ucfirst(htmlspecialchars($order['status'])) ?>
-                    </span>
-                </td>
-                <td><?= date('M j, Y g:i A', strtotime($order['created_at'])) ?></td>
-                <td>
-                    <form method="post">
-                        <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
-                        <select name="status" required>
-                            <option value="processing" <?= $order['status'] === 'processing' ? 'selected' : '' ?>>Processing</option>
-                            <option value="approved" <?= $order['status'] === 'approved' ? 'selected' : '' ?>>Approved</option>
-                            <option value="declined" <?= $order['status'] === 'declined' ? 'selected' : '' ?>>Declined</option>
-                            <option value="shipped" <?= $order['status'] === 'shipped' ? 'selected' : '' ?>>Shipped</option>
-                            <option value="delivered" <?= $order['status'] === 'delivered' ? 'selected' : '' ?>>Delivered</option>
-                            <option value="cancelled" <?= $order['status'] === 'cancelled' ? 'selected' : '' ?>>Cancelled</option>
-                        </select><br><br>
-                        <textarea name="admin_comment" placeholder="Admin comment (optional)" style="width: 100%;"><?= htmlspecialchars($order['admin_comment']) ?></textarea><br>
-                        <button type="submit" name="update_status">Update Status</button>
-                    </form>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="6">
-                    <div class="order-details">
-                        <h4>Order Details:</h4>
-                        <ul>
-                            <?php foreach (getOrderItems($pdo, $order['id']) as $item): ?>
-                                <li>
-                                    <?= htmlspecialchars($item['name']) ?> 
-                                    <?php if ($item['variant_type']): ?>
-                                        (<?= htmlspecialchars($item['variant_type']) ?>: <?= htmlspecialchars($item['variant_value']) ?>)
-                                    <?php endif; ?>
-                                    - <?= $item['quantity'] ?> x KES <?= number_format($item['price'], 2) ?>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
-                        <p><strong>Shipping Address:</strong> <?= nl2br(htmlspecialchars($order['address'])) ?></p>
-                        <?php if ($order['admin_comment']): ?>
-                            <p><strong>Admin Note:</strong> <?= htmlspecialchars($order['admin_comment']) ?></p>
-                        <?php endif; ?>
-                    </div>
-                </td>
-            </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
-    
-    <a href="dashboard.php">← Back to Dashboard</a>
+    <div class="container">
+        <h2>Manage Orders</h2>
+        
+        <?php if (isset($_SESSION['admin_message'])): ?>
+            <div class="message success"><?= $_SESSION['admin_message'] ?></div>
+            <?php unset($_SESSION['admin_message']); ?>
+        <?php endif; ?>
+        
+        <table class="orders-table">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>User</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($orders as $order): ?>
+                <tr>
+                    <td>#<?= $order['id'] ?></td>
+                    <td>
+                        <strong><?= htmlspecialchars($order['user_name']) ?></strong><br>
+                        <?= htmlspecialchars($order['email']) ?><br>
+                        <?= htmlspecialchars($order['phone']) ?>
+                    </td>
+                    <td>
+                        <strong>KES <?= number_format($order['total'], 2) ?></strong>
+                    </td>
+                    <td>
+                        <span class="status-<?= $order['status'] ?>">
+                            <?= ucfirst(htmlspecialchars($order['status'])) ?>
+                        </span>
+                    </td>
+                    <td><?= date('M j, Y g:i A', strtotime($order['created_at'])) ?></td>
+                    <td>
+                        <form method="post">
+                            <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
+                            <select name="status" class="status-select" required>
+                                <option value="processing" <?= $order['status'] === 'processing' ? 'selected' : '' ?>>Processing</option>
+                                <option value="approved" <?= $order['status'] === 'approved' ? 'selected' : '' ?>>Approved</option>
+                                <option value="declined" <?= $order['status'] === 'declined' ? 'selected' : '' ?>>Declined</option>
+                                <option value="shipped" <?= $order['status'] === 'shipped' ? 'selected' : '' ?>>Shipped</option>
+                                <option value="delivered" <?= $order['status'] === 'delivered' ? 'selected' : '' ?>>Delivered</option>
+                                <option value="cancelled" <?= $order['status'] === 'cancelled' ? 'selected' : '' ?>>Cancelled</option>
+                            </select>
+                            <textarea name="admin_comment" class="admin-comment" placeholder="Admin comment (optional)"><?= htmlspecialchars($order['admin_comment']) ?></textarea>
+                            <button type="submit" name="update_status" class="update-btn">Update Status</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="6">
+                        <div class="order-details">
+                            <h4>Order Details:</h4>
+                            <ul class="items-list">
+                                <?php foreach (getOrderItems($pdo, $order['id']) as $item): ?>
+                                    <li>
+                                        <?= htmlspecialchars($item['name']) ?> 
+                                        <?php if ($item['variant_type']): ?>
+                                            (<?= htmlspecialchars($item['variant_type']) ?>: <?= htmlspecialchars($item['variant_value']) ?>)
+                                        <?php endif; ?>
+                                        - <?= $item['quantity'] ?> x KES <?= number_format($item['price'], 2) ?>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                            <p><strong>Shipping Address:</strong> <?= nl2br(htmlspecialchars($order['address'])) ?></p>
+                            <?php if ($order['admin_comment']): ?>
+                                <p><strong>Admin Note:</strong> <?= htmlspecialchars($order['admin_comment']) ?></p>
+                            <?php endif; ?>
+                        </div>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+        
+        <a href="dashboard.php" class="back-link">← Back to Dashboard</a>
+    </div>
 </body>
 </html>

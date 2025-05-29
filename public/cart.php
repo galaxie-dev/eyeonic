@@ -1,9 +1,36 @@
 <?php
-include 'header.php';
 session_start();
+
+if (!isset($_SESSION['cart'])) {
+    $_SESSION['cart'] = [];
+}
+
+include 'header.php';
 require_once '../config/database.php';
 
-// Handle cart updates
+// Handle "Add to Cart" action
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
+    $productId = (int)$_POST['product_id'];
+    $quantity = isset($_POST['quantity']) ? max(1, (int)$_POST['quantity']) : 1;
+
+    // Verify product exists
+    $stmt = $pdo->prepare("SELECT id, price, discount_price FROM products WHERE id = ?");
+    $stmt->execute([$productId]);
+    $product = $stmt->fetch();
+
+    if ($product) {
+        if (isset($_SESSION['cart'][$productId])) {
+            $_SESSION['cart'][$productId] += $quantity; // Update quantity if already in cart
+        } else {
+            $_SESSION['cart'][$productId] = $quantity; // Add new item to cart
+        }
+    }
+
+    // Optional: Add a success message (can be displayed in the UI)
+    $_SESSION['cart_message'] = "Product added to cart successfully!";
+}
+
+// Handle cart updates (existing code)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['update_cart'])) {
         foreach ($_POST['quantity'] as $productId => $quantity) {
@@ -330,6 +357,12 @@ $categories = $categoryStmt->fetchAll();
     <main>
         <section class="cart-section">
             <h2 class="cart-title">Your Shopping Cart</h2>
+            <?php if (isset($_SESSION['cart_message'])): ?>
+                <div class="bg-green-100 text-green-800 p-4 rounded mb-4">
+                    <?= htmlspecialchars($_SESSION['cart_message']) ?>
+                </div>
+                <?php unset($_SESSION['cart_message']); ?>
+            <?php endif; ?>
             
             <?php if (empty($cart)): ?>
                 <div class="cart-empty">

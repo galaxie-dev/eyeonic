@@ -31,10 +31,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Calculate product total
     $productTotal = 0;
     foreach ($cart as $id => $qty) {
-        $stmt = $pdo->prepare("SELECT price FROM products WHERE id = ?");
+        $stmt = $pdo->prepare("SELECT price, discount_price FROM products WHERE id = ?");
         $stmt->execute([$id]);
         $product = $stmt->fetch();
-        $productTotal += $product['price'] * $qty;
+        $price = $product['discount_price'] && $product['discount_price'] < $product['price'] ? $product['discount_price'] : $product['price'];
+        $productTotal += $price * $qty;
     }
 
     // Calculate delivery fee based on product total
@@ -44,34 +45,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Build full address string
     $fullAddress = "{$address}, {$city}, {$zipCode}, {$country}";
 
-    // Insert order with pending status
-    $stmt = $pdo->prepare("INSERT INTO orders (user_id, total, delivery_fee, order_status, shipping_address, created_at) 
-                          VALUES (?, ?, ?, 'processing', ?, NOW())");
-    $stmt->execute([$_SESSION['user_id'], $total, $deliveryFee, $fullAddress]);
+    // Start transaction
+    $pdo->beginTransaction();
 
-    $orderId = $pdo->lastInsertId();
+    try {
+        // Insert order with processing status
+        $stmt = $pdo->prepare("INSERT INTO orders (user_id, total, delivery_fee, order_status, shipping_address, created_at) 
+                              VALUES (?, ?, ?, 'processing', ?, NOW())");
+        $stmt->execute([$_SESSION['user_id'], $total, $deliveryFee, $fullAddress]);
 
-    // Insert order items
-    foreach ($cart as $id => $qty) {
-        $stmt = $pdo->prepare("SELECT price FROM products WHERE id = ?");
-        $stmt->execute([$id]);
-        $product = $stmt->fetch();
-        $stmt = $pdo->prepare("INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$orderId, $id, $qty, $product['price']]);
+        $orderId = $pdo->lastInsertId();
+
+        // Insert order items
+        foreach ($cart as $id => $qty) {
+            $stmt = $pdo->prepare("SELECT price, discount_price FROM products WHERE id = ?");
+            $stmt->execute([$id]);
+            $product = $stmt->fetch();
+            $price = $product['discount_price'] && $product['discount_price'] < $product['price'] ? $product['discount_price'] : $product['price'];
+            $stmt = $pdo->prepare("INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$orderId, $id, $qty, $price]);
+        }
+
+        // Update user's address details if changed
+        if ($user['address'] != $address || $user['city'] != $city || $user['zip_code'] != $zipCode || $user['country'] != $country || $user['phone'] != $phone) {
+            $updateStmt = $pdo->prepare("UPDATE users SET address = ?, city = ?, zip_code = ?, country = ?, phone = ? WHERE id = ?");
+            $updateStmt->execute([$address, $city, $zipCode, $country, $phone, $_SESSION['user_id']]);
+        }
+
+        // Commit transaction
+        $pdo->commit();
+
+        // Clear cart only after successful order
+        $_SESSION['cart'] = [];
+
+        // Redirect to order confirmation
+        header("Location: checkout.php?order_id=$orderId");
+        exit;
+
+    } catch (Exception $e) {
+        // Rollback transaction on error
+        $pdo->rollBack();
+        // Handle error (you might want to log this and show an error message)
+        die("An error occurred while processing your order: " . $e->getMessage());
     }
-
-    // Update user's address details if changed
-    if ($user['address'] != $address || $user['city'] != $city || $user['zip_code'] != $zipCode || $user['country'] != $country || $user['phone'] != $phone) {
-        $updateStmt = $pdo->prepare("UPDATE users SET address = ?, city = ?, zip_code = ?, country = ?, phone = ? WHERE id = ?");
-        $updateStmt->execute([$address, $city, $zipCode, $country, $phone, $_SESSION['user_id']]);
-    }
-
-    // Clear cart
-    unset($_SESSION['cart']);
-
-    // Redirect to order confirmation
-    header("Location: order_confirmation.php?order_id=$orderId");
-    exit;
 }
 
 // Function to calculate delivery fee
@@ -87,20 +103,21 @@ $cartItems = [];
 $productTotal = 0;
 if (!empty($cart)) {
     foreach ($cart as $id => $qty) {
-        $stmt = $pdo->prepare("SELECT id, name, price, image_path FROM products WHERE id = ?");
+        $stmt = $pdo->prepare("SELECT id, name, price, discount_price, image_path FROM products WHERE id = ?");
         $stmt->execute([$id]);
         $product = $stmt->fetch();
         if ($product) {
+            $price = $product['discount_price'] && $product['discount_price'] < $product['price'] ? $product['discount_price'] : $product['price'];
             $imagePath = !empty($product['image_path']) ? '../' . $product['image_path'] : '../assets/no-image.png';
             $cartItems[] = [
                 'id' => $product['id'],
                 'name' => $product['name'],
-                'price' => $product['price'],
+                'price' => $price,
                 'quantity' => $qty,
-                'subtotal' => $product['price'] * $qty,
+                'subtotal' => $price * $qty,
                 'image' => $imagePath
             ];
-            $productTotal += $product['price'] * $qty;
+            $productTotal += $price * $qty;
         }
     }
 }
@@ -232,7 +249,7 @@ $total = $productTotal + $deliveryFee;
                 </div>
             <?php else: ?>
                 <div class="checkout-grid">
-                    <form action="checkout.php" method="post" class="checkout-form">
+                    <form action="place_order.php" method="post" class="checkout-form">
                         <h2 class="text-xl font-bold mb-6">Shipping Information</h2>
                         
                         <div>
