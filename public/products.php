@@ -512,7 +512,7 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
     </section>
 </main>
 
-<!-- Mobile Bottom Navigation -->
+        <!-- Mobile Bottom Navigation -->
 <div class="mobile-nav">
     <div class="mobile-nav-items">
         <a href="index.php" class="mobile-nav-item active">
@@ -522,14 +522,14 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
             </svg>
             Home
         </a>
-        <a href="categories.php" class="mobile-nav-item">
+        <a href="products.php" class="mobile-nav-item">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="3" width="7" height="7"></rect>
                 <rect x="14" y="3" width="7" height="7"></rect>
                 <rect x="14" y="14" width="7" height="7"></rect>
                 <rect x="3" y="14" width="7" height="7"></rect>
             </svg>
-            Categories
+            Shop
         </a>
         <a href="cart.php" class="mobile-nav-item">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -539,7 +539,7 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
             </svg>
             Cart
         </a>
-        <a href="account.php" class="mobile-nav-item">
+        <a href="dashboard.php" class="mobile-nav-item">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                 <circle cx="12" cy="7" r="4"></circle>

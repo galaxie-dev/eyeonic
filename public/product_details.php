@@ -2,6 +2,11 @@
 require_once '../config/database.php';
 include 'header.php';
 
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 $id = $_GET['id'] ?? null;
 
 if (!$id) {
@@ -25,11 +30,40 @@ if (!$product) {
     exit;
 }
 
+// Handle add to cart form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
+    $product_id = $_POST['product_id'];
+    $quantity = (int)$_POST['quantity'];
+    
+    // Validate quantity
+    if ($quantity < 1) {
+        $quantity = 1;
+    }
+    
+    // Initialize cart if not exists
+    if (!isset($_SESSION['cart'])) {
+        $_SESSION['cart'] = [];
+    }
+    
+    // Add product to cart or update quantity
+    if (isset($_SESSION['cart'][$product_id])) {
+        $_SESSION['cart'][$product_id] += $quantity;
+    } else {
+        $_SESSION['cart'][$product_id] = $quantity;
+    }
+    
+    // Set success message
+    $_SESSION['cart_message'] = 'Product added to cart successfully!';
+    
+    // Redirect to prevent form resubmission
+    header("Location: product.php?id=$id");
+    exit;
+}
+
 // Fetch categories for navigation
 $categoryStmt = $pdo->query("SELECT * FROM categories");
 $categories = $categoryStmt->fetchAll();
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -39,199 +73,213 @@ $categories = $categoryStmt->fetchAll();
     <title>Eyeonic - <?= htmlspecialchars($product['name']) ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
     <style>
+        :root {
+            --primary: #2563eb;
+            --primary-light: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --secondary: #e0f2fe;
+            --dark: #1e293b;
+            --light: #f8fafc;
+        }
+        
         body {
             font-family: 'Inter', sans-serif;
+            background-color: #f9fafb;
+            color: var(--dark);
         }
+        
+        /* Header styles */
         .header-logo svg {
             width: 24px;
             height: 24px;
-            color: #111827;
+            color: var(--dark);
         }
+        
         .header-logo-text {
             font-weight: 600;
             font-size: 1.125rem;
-            color: #111827;
+            color: var(--dark);
             user-select: none;
         }
+        
         .nav-link {
             font-weight: 500;
             font-size: 0.875rem;
             color: #4b5563;
             transition: color 0.2s;
             text-decoration: none;
-            margin-left: 2rem;
+            margin-left: 1rem;
         }
+        
         .nav-link:hover {
-            color: #111827;
+            color: var(--dark);
         }
-        .btn-signin {
-            display: inline-block;
-            background-color: #111827;
-            color: white;
-            font-weight: 600;
-            font-size: 0.875rem;
-            padding: 0.375rem 1rem;
-            border-radius: 0.375rem;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .btn-signin:hover {
-            background-color: #1f2937;
-        }
-        .icon-button {
-            color: #4b5563;
-            font-size: 1rem;
-            padding: 0.25rem;
-            border-radius: 0.375rem;
-            cursor: pointer;
-            border: none;
-            background: transparent;
-            transition: color 0.2s;
-        }
-        .icon-button:hover,
-        .icon-button:focus {
-            color: #111827;
-            outline: none;
-            box-shadow: 0 0 0 2px #111827;
-        }
+        
+        /* Product section */
         .product-detail-section {
             max-width: 1200px;
-            margin: 2.5rem auto 0 auto;
+            margin: 2rem auto;
             padding: 0 1rem;
         }
-        .product-detail-title {
-            font-weight: 600;
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-            color: #111827;
-        }
+        
         .product-detail {
             display: grid;
             grid-template-columns: 1fr;
             gap: 1.5rem;
             background: white;
-            border-radius: 0.375rem;
-            box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
-            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
         }
-        @media (min-width: 640px) {
+        
+        @media (min-width: 768px) {
             .product-detail {
                 grid-template-columns: 1fr 1fr;
             }
         }
-        .product-image {
-            width: 100%;
-            height: auto;
-            object-fit: contain;
+        
+        .product-image-container {
             padding: 1.5rem;
-            background-color: white;
-            border-radius: 0.375rem;
-        }
-        .details {
-            padding: 1rem;
+            background-color: #f8fafc;
             display: flex;
-            flex-direction: column;
+            align-items: center;
             justify-content: center;
         }
-        .product-price {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #111827;
-            margin-bottom: 1rem;
+        
+        .product-image {
+            max-width: 100%;
+            height: auto;
+            max-height: 400px;
+            object-fit: contain;
+            border-radius: 0.375rem;
         }
-        .product-desc {
-            font-size: 0.875rem;
-            line-height: 1.25rem;
-            color: #6b7280;
-            margin-bottom: 1.5rem;
-        }
-        .product-form {
+        
+        .product-details {
+            padding: 1.5rem;
             display: flex;
             flex-direction: column;
+        }
+        
+        .product-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+        
+        .product-brand {
+            font-size: 1rem;
+            color: #64748b;
+            margin-bottom: 1rem;
+        }
+        
+        .product-price {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin: 1rem 0;
+        }
+        
+        .product-description {
+            font-size: 0.9375rem;
+            line-height: 1.5;
+            color: #475569;
+            margin-bottom: 1.5rem;
+        }
+        
+        .product-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .product-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            color: #64748b;
+        }
+        
+        .product-meta-item i {
+            color: var(--primary);
+        }
+        
+        /* Cart form */
+        .cart-form {
+            margin-top: auto;
+        }
+        
+        .quantity-selector {
+            display: flex;
+            align-items: center;
             gap: 0.5rem;
+            margin-bottom: 1rem;
         }
-        .product-form label {
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: #111827;
-        }
-        .product-form input[type="number"] {
-            width: 100px;
+        
+        .quantity-input {
+            width: 70px;
             padding: 0.5rem;
-            border: 1px solid #e5e7eb;
+            border: 1px solid #e2e8f0;
             border-radius: 0.375rem;
-            font-size: 0.875rem;
+            text-align: center;
+            font-weight: 500;
         }
-        .product-form button {
-            background-color: #2563eb;
+        
+        .btn-add-to-cart {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background-color: var(--primary);
             color: white;
             font-weight: 600;
-            font-size: 0.875rem;
-            padding: 0.5rem 1.25rem;
+            font-size: 0.9375rem;
+            padding: 0.75rem 1.5rem;
             border-radius: 0.375rem;
             border: none;
             cursor: pointer;
-            transition: background-color 0.2s;
-            width: max-content;
+            transition: all 0.2s;
+            width: 100%;
         }
-        .product-form button:hover {
-            background-color: #1d4ed8;
+        
+        .btn-add-to-cart:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
         }
-        footer {
-            border-top: 1px solid #e5e7eb;
-            margin-top: 4rem;
-            padding: 1.5rem 1rem;
-            max-width: 1200px;
-            margin-left: auto;
-            margin-right: auto;
+        
+        .btn-add-to-cart:active {
+            transform: translateY(0);
+        }
+        
+        /* Success message */
+        .alert-success {
+            background-color: #d1fae5;
+            color: #065f46;
+            padding: 0.75rem 1rem;
+            border-radius: 0.375rem;
+            margin-bottom: 1.5rem;
             display: flex;
-            flex-direction: column;
             align-items: center;
-            font-size: 0.625rem;
-            color: #9ca3af;
+            gap: 0.5rem;
         }
-        @media (min-width: 640px) {
-            footer {
-                flex-direction: row;
-                justify-content: space-between;
+        
+        /* Responsive adjustments */
+        @media (max-width: 480px) {
+            .product-details {
+                padding: 1rem;
             }
-        }
-        .footer-links {
-            display: flex;
-            gap: 1.5rem;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-bottom: 0.75rem;
-        }
-        @media (min-width: 640px) {
-            .footer-links {
-                margin-bottom: 0;
+            
+            .product-title {
+                font-size: 1.25rem;
             }
-        }
-        .footer-links a {
-            color: #9ca3af;
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-        .footer-links a:hover {
-            color: #6b7280;
-        }
-        .footer-social {
-            display: flex;
-            gap: 1.5rem;
-            color: #9ca3af;
-        }
-        .footer-social a {
-            color: inherit;
-            text-decoration: none;
-            font-size: 1rem;
-            transition: color 0.2s;
-        }
-        .footer-social a:hover {
-            color: #6b7280;
+            
+            .product-price {
+                font-size: 1.1rem;
+            }
         }
     </style>
 </head>
@@ -239,31 +287,69 @@ $categories = $categoryStmt->fetchAll();
 
     <main>
         <section class="product-detail-section">
-            <h2 class="product-detail-title"><?= htmlspecialchars($product['name']) ?></h2>
+            <?php if (isset($_SESSION['cart_message'])): ?>
+                <div class="alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <?= $_SESSION['cart_message'] ?>
+                    <?php unset($_SESSION['cart_message']); ?>
+                </div>
+            <?php endif; ?>
+            
             <div class="product-detail">
-                <img alt="<?= htmlspecialchars($product['name']) ?>" class="product-image" height="400" src="<?php echo !empty($product['image_path']) ? '../' . htmlspecialchars($product['image_path']) : '../assets/no-image.png'; ?>" width="400"/>
-                <div class="details">
-                    <p><?= htmlspecialchars($product['name'])?></p>
-                    <p>By <?= htmlspecialchars($product['brand'])?></p>
+                <div class="product-image-container">
+                    <img 
+                        alt="<?= htmlspecialchars($product['name']) ?>" 
+                        class="product-image" 
+                        src="<?php echo !empty($product['image_path']) ? '../' . htmlspecialchars($product['image_path']) : '../assets/no-image.png'; ?>"
+                    />
+                </div>
+                
+                <div class="product-details">
+                    <h1 class="product-title"><?= htmlspecialchars($product['name']) ?></h1>
+                    <p class="product-brand">By <?= htmlspecialchars($product['brand']) ?></p>
+                    
                     <p class="product-price">KES <?= number_format($product['price'], 2) ?></p>
-                    <p class="product-desc"><?= nl2br(htmlspecialchars($product['description'])) ?></p>
-                    <p>By <?= htmlspecialchars($product['brand'])?></p>       
-                    <p>Category: <?= htmlspecialchars($product['category_name'])?></p>   
                     
+                    <p class="product-description"><?= nl2br(htmlspecialchars($product['description'])) ?></p>
                     
-                    <?php echo date('M j, Y', strtotime($product['created_at'])); ?>              
-                    <form action="cart.php" method="post" class="product-form">
+                    <div class="product-meta">
+                        <div class="product-meta-item">
+                            <i class="fas fa-tag"></i>
+                            <span><?= htmlspecialchars($product['category_name']) ?></span>
+                        </div>
+                        <div class="product-meta-item">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span><?= date('M j, Y', strtotime($product['created_at'])) ?></span>
+                        </div>
+                    </div>
+                    
+                    <form action="cart.php" method="post" class="cart-form">
                         <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
-                        <label for="qty">Quantity:</label>
-                        <input type="number" name="quantity" id="qty" value="1" min="1" required>
-                        <button type="submit">Add to Cart</button>
+                        
+                        <div class="quantity-selector">
+                            <label for="quantity">Quantity:</label>
+                            <input 
+                                type="number" 
+                                id="quantity" 
+                                name="quantity" 
+                                class="quantity-input" 
+                                value="1" 
+                                min="1" 
+                                max="10"
+                                required
+                            >
+                        </div>
+                        
+                        <button type="submit" name="add_to_cart" class="btn-add-to-cart">
+                            <i class="fas fa-shopping-cart"></i>
+                            Add to Cart
+                        </button>
                     </form>
                 </div>
             </div>
         </section>
     </main>
 
+    <?php include 'footer.php'; ?>
 </body>
 </html>
-
-<?php include 'footer.php'; ?>

@@ -294,6 +294,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </a>
                 </li>
                 <li class="nav-item">
+                      <a href="products.php" class="nav-link">
+                            <i class="fas fa-arrow-left mr-2"></i> Continue Shopping
+                        </a>
+                </li>
+                <li class="nav-item">
                     <a href="logout.php" class="nav-link">
                         <i class="fas fa-sign-out-alt"></i> Logout
                     </a>
