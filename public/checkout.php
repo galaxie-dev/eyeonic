@@ -170,4 +170,4 @@ $items = $stmt->fetchAll();
     
     <?php include 'footer.php'; ?>
 </body>
-</html>
+</html> 
