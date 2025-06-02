@@ -1,8 +1,28 @@
 <?php
-require_once '../config/database.php';
-require_once 'includes/helpers.php';
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
 session_start();
+
+// Database connection
+$host = 'sql307.infinityfree.com';
+$db   = 'if0_39115861_eyeonic';
+$user = 'if0_39115861';
+$pass = 'QPDY35CzNmhsUMy';
+$charset = 'utf8mb4'; 
+
+$options = [
+    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+];
+
+try {
+    $pdo = new PDO("mysql:host=$host;dbname=$db;charset=$charset", $user, $pass, $options);
+} catch (PDOException $e) {
+    die("DB connection failed: " . $e->getMessage());
+}
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = cleanInput($_POST['email']);

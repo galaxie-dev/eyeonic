@@ -1,7 +1,35 @@
 <?php
-require_once '../config/database.php';
-require_once 'includes/auth.php';
-requireAdminLogin();
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+session_start();
+
+// Check if admin is logged in
+if (!isset($_SESSION['admin_id'])) {
+    header("Location: login.php");
+    exit();
+}
+
+// Database connection
+$host = 'sql307.infinityfree.com';
+$db   = 'if0_39115861_eyeonic';
+$user = 'if0_39115861';
+$pass = 'QPDY35CzNmhsUMy';
+$charset = 'utf8mb4'; 
+
+$options = [
+    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+];
+
+try {
+    $pdo = new PDO("mysql:host=$host;dbname=$db;charset=$charset", $user, $pass, $options);
+} catch (PDOException $e) {
+    die("DB connection failed: " . $e->getMessage());
+}
+
+
 
 // Fetch all dashboard statistics
 $totalUsers = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
@@ -29,6 +57,28 @@ $lowStockProducts = $pdo->query("
     ORDER BY stock ASC
     LIMIT 5
 ")->fetchAll();
+
+
+
+
+
+
+
+
+function requireAdminLogin() {
+    session_start();
+    if (!isset($_SESSION['admin_id'])) {
+        header("Location: login.php");
+        exit();
+    }
+}
+
+function cleanInput($data) {
+    $data = trim($data);
+    $data = stripslashes($data);
+    $data = htmlspecialchars($data);
+    return $data;
+}
 ?>
 
 <!DOCTYPE html>
