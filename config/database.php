@@ -15,3 +15,13 @@ try {
 } catch (PDOException $e) {
     die("DB connection failed: " . $e->getMessage());
 }
+
+
+
+
+
+
+
+
+//MySQL DB Name	        MySQL User Name	 MySQL Password	        MySQL Host Name	
+//if0_39115861_eyeonic	if0_39115861	(Your vPanel Password)	sql307.infinityfree.com
