@@ -110,7 +110,7 @@
             </div>
             <nav class="header-nav">
                 <a href="index.php">Home</a>
-                <a href="public/products.php">Shop</a>           
+                <a href="public/login.php">Shop</a>           
                 <a href="public/login.php">Log in</a>
             </nav>
             <button class="menu-button" aria-label="Toggle Menu" onclick="toggleMenu()">

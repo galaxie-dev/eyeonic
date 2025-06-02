@@ -1,9 +1,32 @@
 <?php
-require_once '../config/database.php';
-require_once '../includes/helpers.php';
-require_once '../includes/auth.php';
 
-session_start();
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+
+$host = 'sql307.infinityfree.com';
+$db   = 'if0_39115861_eyeonic';
+$user = 'if0_39115861';
+$pass = 'QPDY35CzNmhsUMy';
+$charset = 'utf8mb4'; 
+
+$options = [
+    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+];
+
+try {
+    $pdo = new PDO("mysql:host=$host;dbname=$db;charset=$charset", $user, $pass, $options);
+} catch (PDOException $e) {
+    die("DB connection failed: " . $e->getMessage());
+}
+
+
+
+//MySQL DB Name	        MySQL User Name	 MySQL Password	        MySQL Host Name	
+//if0_39115861_eyeonic	if0_39115861	(Your vPanel Password)	sql307.infinityfree.com
+
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = cleanInput($_POST['name']);
@@ -20,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
         try {
-            $stmt = $pdo->prepare("INSERT INTO users (full_name, email, phone, password_hash, user_role) VALUES (?, ?, ?, ?, 'customer')");
+            $stmt = $pdo->prepare("INSERT INTO users (name, email, phone, password_hash, user_role) VALUES (?, ?, ?, ?, 'customer')");
             $success = $stmt->execute([$name, $email, $phone, $password_hash]);
 
             if ($success) {
@@ -32,6 +55,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = "An error occurred: " . $e->getMessage();
         }
     }
+}
+
+function cleanInput($data) {
+    $data = trim($data);
+    $data = stripslashes($data);
+    $data = htmlspecialchars($data);
+    return $data;
 }
 
 ?>
