@@ -192,7 +192,7 @@ $items = $stmt->fetchAll();
 
     <script>
 // Initialize Stripe with your publishable key
-const stripe = Stripe('pk_test_51RVvAMQe2AcNBFj7ynoUh2k2C2YGQxQB7NQnzzYypNu0lsVsVMYMtNmXZdqRWAfWb5Nqz80XFuwp3n0AhBGUv8HB00LjR07t7F');
+const stripe = Stripe('');
 const elements = stripe.elements();
 const cardElement = elements.create('card');
 cardElement.mount('#card-element');

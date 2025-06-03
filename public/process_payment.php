@@ -12,7 +12,7 @@ error_reporting(E_ALL);
 
 
 
-\Stripe\Stripe::setApiKey('sk_test_51RVvAMQe2AcNBFj7yRa1lrF89G5NwTxA3RswKarwfRzdyg8VNZJOkcNUP30sQwS25r5k8PJftJqif37q8eStSuwM00Qm4ZzJIj'); // Replace with your Stripe Secret Key
+\Stripe\Stripe::setApiKey(''); // Replace with your Stripe Secret Key
 
 if (!isset($_POST['order_id']) || !isset($_SESSION['user_id'])) {
     header('Location: cart.php');
