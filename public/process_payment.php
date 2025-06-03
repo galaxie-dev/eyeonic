@@ -12,7 +12,7 @@ error_reporting(E_ALL);
 
 
 
-//  \Stripe\Stripe::setApiKey(''); your Stripe Secret Key
+
 
 if (!isset($_POST['order_id']) || !isset($_SESSION['user_id'])) {
     header('Location: cart.php');
