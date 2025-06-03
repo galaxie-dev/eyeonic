@@ -43,6 +43,7 @@ $items = $stmt->fetchAll();
     <title>Order Confirmation - Eyeonic</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://js.stripe.com/v3/"></script> <!-- Stripe.js -->
     <style>
         .confirmation-container {
             max-width: 800px;
@@ -112,6 +113,16 @@ $items = $stmt->fetchAll();
         .btn-payment:hover {
             background-color: #1d4ed8;
         }
+        <style>
+    .hidden {
+        display: none;
+    }
+    #card-element {
+        border: 1px solid #e5e7eb;
+        padding: 10px;
+        border-radius: 6px;
+    }
+</style>
     </style>
 </head>
 <body>
@@ -147,18 +158,28 @@ $items = $stmt->fetchAll();
                     </div>
                 </div>
                 
-                <h3>Payment Methods</h3>
-                <form method="post" action="process_payment.php" class="payment-form">
+               <h3>Payment Methods</h3>
+                <form method="post" action="process_payment.php" class="payment-form" id="payment-form">
                     <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
                     <div>
                         <input type="radio" name="payment_method" value="mpesa" id="mpesa" checked>
                         <label for="mpesa">M-Pesa</label>
                     </div>
+                     <div id="mpesa-phone" class="mt-2 hidden">
+                        <label for="mpesa_phone_number">M-Pesa Phone Number (e.g., 2547XXXXXXXX):</label>
+                        <input type="text" name="mpesa_phone_number" id="mpesa_phone_number" class="border p-2 rounded w-full" placeholder="2547XXXXXXXX">
+                    </div>
                     <div>
                         <input type="radio" name="payment_method" value="card" id="card">
                         <label for="card">Credit/Debit Card</label>
                     </div>
-                    <button type="submit" class="btn-payment">Proceed to Payment</button>
+                    <div>
+                        <input type="radio" name="payment_method" value="cash_on_delivery" id="cash_on_delivery">
+                        <label for="cash_on_delivery">Payment on Delivery</label>
+                    </div>               
+                    <div id="card-element" class="hidden mt-4"></div>
+                    <div id="card-errors" role="alert" class="text-red-600"></div>
+                    <button type="submit" class="btn-payment" id="submit-payment">Proceed to Payment</button>
                 </form>
                 
                 <a href="products.php" class="btn-continue">
@@ -167,6 +188,134 @@ $items = $stmt->fetchAll();
             </div>
         </div>
     </main>
+
+
+    <script>
+// Initialize Stripe with your publishable key
+const stripe = Stripe('pk_test_51RVvAMQe2AcNBFj7ynoUh2k2C2YGQxQB7NQnzzYypNu0lsVsVMYMtNmXZdqRWAfWb5Nqz80XFuwp3n0AhBGUv8HB00LjR07t7F');
+const elements = stripe.elements();
+const cardElement = elements.create('card');
+cardElement.mount('#card-element');
+
+// Show/hide inputs based on payment method
+const paymentMethods = document.querySelectorAll('input[name="payment_method"]');
+const cardElementContainer = document.getElementById('card-element');
+const mpesaPhoneContainer = document.getElementById('mpesa-phone');
+paymentMethods.forEach(method => {
+    method.addEventListener('change', () => {
+        cardElementContainer.classList.add('hidden');
+        mpesaPhoneContainer.classList.add('hidden');
+        if (method.value === 'card') {
+            cardElementContainer.classList.remove('hidden');
+        } else if (method.value === 'mpesa') {
+            mpesaPhoneContainer.classList.remove('hidden');
+        }
+    });
+});
+
+// Handle form submission
+const form = document.getElementById('payment-form');
+const submitButton = document.getElementById('submit-payment');
+const cardErrors = document.getElementById('card-errors');
+
+form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    submitButton.disabled = true;
+    cardErrors.textContent = '';
+
+    const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
+
+    if (paymentMethod === 'card') {
+        // Handle Stripe card payment (existing code)
+        const { paymentMethod, error } = await stripe.createPaymentMethod({
+            type: 'card',
+            card: cardElement,
+            billing_details: {
+                name: '<?= htmlspecialchars($order['name']) ?>',
+                email: '<?= htmlspecialchars($order['email']) ?>',
+                phone: '<?= htmlspecialchars($order['phone']) ?>',
+                address: {
+                    line1: '<?= htmlspecialchars($order['shipping_address']) ?>',
+                },
+            },
+        });
+
+        if (error) {
+            cardErrors.textContent = error.message;
+            submitButton.disabled = false;
+        } else {
+            const formData = new FormData(form);
+            formData.append('payment_method_id', paymentMethod.id);
+
+            fetch('process_payment.php', {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Server response:', data);
+                if (data.success) {
+                    window.location.href = 'payment_success.php';
+                } else {
+                    cardErrors.textContent = data.message;
+                    submitButton.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                cardErrors.textContent = 'An error occurred: ' + error.message;
+                submitButton.disabled = false;
+            });
+        }
+    } else if (paymentMethod === 'mpesa') {
+        // Validate M-Pesa phone number
+        const phoneNumber = document.getElementById('mpesa_phone_number').value;
+        if (!phoneNumber.match(/^2547\d{8}$/)) {
+            cardErrors.textContent = 'Please enter a valid phone number (e.g., 2547XXXXXXXX)';
+            submitButton.disabled = false;
+            return;
+        }
+        const formData = new FormData(form);
+        fetch('process_payment.php', {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Server response:', data);
+            if (data.success) {
+                cardErrors.textContent = 'M-Pesa payment initiated. Check your phone to complete the payment.';
+                submitButton.disabled = false;
+                // Optionally poll for payment status
+                setTimeout(() => {
+                    window.location.href = 'payment_success.php';
+                }, 30000); // Redirect after 30 seconds (adjust as needed)
+            } else {
+                cardErrors.textContent = data.message;
+                submitButton.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            cardErrors.textContent = 'An error occurred: ' + error.message;
+            submitButton.disabled = false;
+        });
+    } else {
+        // Handle Payment on Delivery
+        form.submit();
+    }
+});
+</script>
     
     <?php include 'footer.php'; ?>
 </body>

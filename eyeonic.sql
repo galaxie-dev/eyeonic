@@ -79,6 +79,7 @@ CREATE TABLE orders (
     shipping_address TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
+    ALTER TABLE orders ADD COLUMN payment_method VARCHAR(50) DEFAULT NULL;
 );
 
 CREATE TABLE order_items (

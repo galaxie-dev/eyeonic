@@ -40,8 +40,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 if (resizeAndCropImage($target_file, $resized_path)) {
                     unlink($target_file);
-                    $image_path = "uploads/resized_" . $image_name; // Relative path for DB
-                    $image_url = $image_path; // Using the same path for both fields
+                    $image_path = "uploads/resized_" . $image_name; 
+                    $image_url = $image_path;
                 }
             }
         }
