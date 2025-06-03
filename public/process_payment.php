@@ -12,7 +12,7 @@ error_reporting(E_ALL);
 
 
 
-\Stripe\Stripe::setApiKey(''); // Replace with your Stripe Secret Key
+//  \Stripe\Stripe::setApiKey(''); your Stripe Secret Key
 
 if (!isset($_POST['order_id']) || !isset($_SESSION['user_id'])) {
     header('Location: cart.php');
@@ -47,7 +47,7 @@ try {
             'payment_method' => $_POST['payment_method_id'],
             'confirmation_method' => 'manual',
             'confirm' => true,
-            'return_url' => 'http://your-domain.com/payment_success.php', // Replace with your success URL
+            'return_url' => 'payment_success.php', // Replace with your success URL
         ]);
 
         if ($paymentIntent->status === 'succeeded') {
