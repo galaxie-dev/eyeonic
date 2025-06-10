@@ -12,10 +12,16 @@ if (!isset($_SESSION['admin_id'])) {
 }
 
 // Database connection
-$host = 'sql307.infinityfree.com';
-$db   = 'if0_39115861_eyeonic';
-$user = 'if0_39115861';
-$pass = 'QPDY35CzNmhsUMy';
+// $host = 'sql307.infinityfree.com';
+// $db   = 'if0_39115861_eyeonic';
+// $user = 'if0_39115861';
+// $pass = 'QPDY35CzNmhsUMy';
+// $charset = 'utf8mb4'; 
+
+$host = 'localhost';
+$db   = 'eyeonic';
+$user = 'root';
+$pass = '';
 $charset = 'utf8mb4'; 
 
 $options = [

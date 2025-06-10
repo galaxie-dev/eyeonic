@@ -13,7 +13,6 @@
             margin: 0;
         }
         header {
-            /* background: linear-gradient(to right, rgba(0,0,0,0.6), transparent); */
             background-color: transparent;
             padding: 1rem 1.5rem;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -43,12 +42,12 @@
             font-size: 1.5rem;
             color: #2563eb;
             user-select: none;
-            
         }
         .header-nav {
             display: none;
             gap: 1.5rem;
             flex-wrap: wrap;
+            align-items: center;
         }
         .header-nav.active {
             display: flex;
@@ -62,6 +61,10 @@
             color: #2563eb;
             text-decoration: none;
             transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            position: relative;
         }
         .header-nav a:hover {
             color: #facc15;
@@ -70,7 +73,7 @@
             display: block;
             background: none;
             border: none;
-            color: #ffffff;
+            color: #2563eb;
             font-size: 1.25rem;
             cursor: pointer;
             padding: 0.5rem;
@@ -78,7 +81,26 @@
             transition: background-color 0.2s;
         }
         .menu-button:hover {
-            background-color: #1d4ed8;
+            background-color: #dbeafe;
+        }
+        .nav-icons {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .count-badge {
+            position: absolute;
+            top: -20px;
+            right: -28px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         @media (min-width: 768px) {
             .header-nav {
@@ -111,12 +133,49 @@
             <nav class="header-nav">
                 <a href="index.php">Home</a>
                 <a href="products.php">Shop</a>
-                <a href="cart.php">Cart</a>
-                <a href="dashboard.php">Dashboard</a>
-                <a href="logout.php">Logout</a>
+                <a href="wishlist.php" class="nav-link">
+                    Wishlist
+                    <span class="wishlist-count count-badge" style="display: none;">0</span>
+                </a>
+                <a href="cart.php" class="nav-link">
+                    Cart
+                    <span class="cart-count count-badge" style="display: none;">0</span>
+                </a>              
+                <?php if(isset($_SESSION['user_id'])): ?>
+                    <a href="dashboard.php">Dashboard</a>
+                    <a href="logout.php">Logout</a>
+                <?php else: ?>
+                    <a href="login.php">Login</a>
+                    <a href="register.php">Register</a>
+                <?php endif; ?>
             </nav>
             <button class="menu-button" aria-label="Toggle Menu" onclick="toggleMenu()">
                 <i class="fas fa-bars"></i>
             </button>
         </div>
     </header>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Update counts when page loads
+        fetch('get_cart_count.php')
+            .then(response => response.json())
+            .then(data => {
+                document.querySelectorAll('.cart-count').forEach(el => {
+                    el.textContent = data.count;
+                    el.style.display = data.count > 0 ? 'inline-block' : 'none';
+                });
+            });
+
+        <?php if(isset($_SESSION['user_id'])): ?>
+        fetch('get_wishlist_count.php')
+            .then(response => response.json())
+            .then(data => {
+                document.querySelectorAll('.wishlist-count').forEach(el => {
+                    el.textContent = data.count;
+                    el.style.display = data.count > 0 ? 'inline-block' : 'none';
+                });
+            });
+        <?php endif; ?>
+    });
+    </script>

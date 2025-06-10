@@ -1,7 +1,12 @@
 <?php
 require_once '../config/database.php';
+require_once '../mpesa-php-sdk/src/Mpesa.php';
+require_once '../vendor/autoload.php';
+
 session_start();
 include 'header.php';
+
+$mpesa = new Safaricom\Mpesa\Mpesa();
 
 // Verify IF order exists and IT belongs to the user
 if (!isset($_GET['order_id']) || !isset($_SESSION['user_id'])) {
@@ -20,7 +25,7 @@ $stmt->execute([$orderId, $_SESSION['user_id']]);
 $order = $stmt->fetch();
 
 if (!$order) {
-    header('Location: cart.php');
+    header('Location: process_payment.php');
     exit;
 }
 
@@ -122,6 +127,10 @@ $items = $stmt->fetchAll();
         padding: 10px;
         border-radius: 6px;
     }
+
+    .hidden {
+    display: none;
+}
 </style>
     </style>
 </head>
@@ -159,7 +168,8 @@ $items = $stmt->fetchAll();
                 </div>
                 
                <h3>Payment Methods</h3>
-                <form method="post" action="process_payment.php" class="payment-form" id="payment-form">
+                <form method="post" action="mpesa.php" class="payment-form" id="payment-form">
+                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                     <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
                     <div>
                         <input type="radio" name="payment_method" value="mpesa" id="mpesa" checked>
@@ -191,132 +201,50 @@ $items = $stmt->fetchAll();
 
 
     <script>
-// Initialize Stripe with your publishable key
-const stripe = Stripe('');
-const elements = stripe.elements();
-const cardElement = elements.create('card');
-cardElement.mount('#card-element');
-
-// Show/hide inputs based on payment method
-const paymentMethods = document.querySelectorAll('input[name="payment_method"]');
-const cardElementContainer = document.getElementById('card-element');
-const mpesaPhoneContainer = document.getElementById('mpesa-phone');
-paymentMethods.forEach(method => {
-    method.addEventListener('change', () => {
-        cardElementContainer.classList.add('hidden');
-        mpesaPhoneContainer.classList.add('hidden');
-        if (method.value === 'card') {
-            cardElementContainer.classList.remove('hidden');
-        } else if (method.value === 'mpesa') {
-            mpesaPhoneContainer.classList.remove('hidden');
-        }
+        document.addEventListener('DOMContentLoaded', function() {
+    // Get all payment method radio buttons
+    const paymentMethods = document.querySelectorAll('input[name="payment_method"]');
+    // Get the form element
+    const paymentForm = document.getElementById('payment-form');
+    // Get the relevant divs to show/hide
+    const mpesaPhoneDiv = document.getElementById('mpesa-phone');
+    const cardElementDiv = document.getElementById('card-element');
+    
+    // Add event listeners to each payment method
+    paymentMethods.forEach(method => {
+        method.addEventListener('change', function() {
+            // Hide all optional fields first
+            mpesaPhoneDiv.classList.add('hidden');
+            cardElementDiv.classList.add('hidden');
+            
+            // Show the relevant field based on selection
+            if (this.value === 'mpesa') {
+                mpesaPhoneDiv.classList.remove('hidden');
+                paymentForm.action = 'mpesa.php';
+            } 
+            else if (this.value === 'card') {
+                cardElementDiv.classList.remove('hidden');
+                paymentForm.action = 'mpesa.php';
+            }
+            else if (this.value === 'cash_on_delivery') {
+                paymentForm.action = 'payment_on_delivery.php';
+            }
+        });
     });
-});
-
-// Handle form submission
-const form = document.getElementById('payment-form');
-const submitButton = document.getElementById('submit-payment');
-const cardErrors = document.getElementById('card-errors');
-
-form.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    submitButton.disabled = true;
-    cardErrors.textContent = '';
-
-    const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
-
-    if (paymentMethod === 'card') {
-        // Handle Stripe card payment (existing code)
-        const { paymentMethod, error } = await stripe.createPaymentMethod({
-            type: 'card',
-            card: cardElement,
-            billing_details: {
-                name: '<?= htmlspecialchars($order['name']) ?>',
-                email: '<?= htmlspecialchars($order['email']) ?>',
-                phone: '<?= htmlspecialchars($order['phone']) ?>',
-                address: {
-                    line1: '<?= htmlspecialchars($order['shipping_address']) ?>',
-                },
-            },
-        });
-
-        if (error) {
-            cardErrors.textContent = error.message;
-            submitButton.disabled = false;
-        } else {
-            const formData = new FormData(form);
-            formData.append('payment_method_id', paymentMethod.id);
-
-            fetch('process_payment.php', {
-                method: 'POST',
-                body: formData,
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Server response:', data);
-                if (data.success) {
-                    window.location.href = 'payment_success.php';
-                } else {
-                    cardErrors.textContent = data.message;
-                    submitButton.disabled = false;
-                }
-            })
-            .catch(error => {
-                console.error('Fetch error:', error);
-                cardErrors.textContent = 'An error occurred: ' + error.message;
-                submitButton.disabled = false;
-            });
+    
+    // Initialize the form based on the default selected payment method
+    const defaultMethod = document.querySelector('input[name="payment_method"]:checked');
+    if (defaultMethod) {
+        if (defaultMethod.value === 'mpesa') {
+            mpesaPhoneDiv.classList.remove('hidden');
         }
-    } else if (paymentMethod === 'mpesa') {
-        // Validate M-Pesa phone number
-        const phoneNumber = document.getElementById('mpesa_phone_number').value;
-        if (!phoneNumber.match(/^2547\d{8}$/)) {
-            cardErrors.textContent = 'Please enter a valid phone number (e.g., 2547XXXXXXXX)';
-            submitButton.disabled = false;
-            return;
-        }
-        const formData = new FormData(form);
-        fetch('process_payment.php', {
-            method: 'POST',
-            body: formData,
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('Server response:', data);
-            if (data.success) {
-                cardErrors.textContent = 'M-Pesa payment initiated. Check your phone to complete the payment.';
-                submitButton.disabled = false;
-                // Optionally poll for payment status
-                setTimeout(() => {
-                    window.location.href = 'payment_success.php';
-                }, 30000); // Redirect after 30 seconds (adjust as needed)
-            } else {
-                cardErrors.textContent = data.message;
-                submitButton.disabled = false;
-            }
-        })
-        .catch(error => {
-            console.error('Fetch error:', error);
-            cardErrors.textContent = 'An error occurred: ' + error.message;
-            submitButton.disabled = false;
-        });
-    } else {
-        // Handle Payment on Delivery
-        form.submit();
+        // Trigger the change event to set the correct form action
+        defaultMethod.dispatchEvent(new Event('change'));
     }
 });
+
 </script>
-    
-    <?php include 'footer.php'; ?>
 </body>
-</html> 
+</html>
+<?php include 'footer.php'; ?>
+<?php include 'mobile-menu.php'; ?>

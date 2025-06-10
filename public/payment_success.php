@@ -49,6 +49,7 @@ include 'header.php';
             </a>
         </div>
     </main>
+    <?php include 'mobile-menu.php'; ?>
     <?php include 'footer.php'; ?>
 </body>
 </html>

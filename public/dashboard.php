@@ -34,7 +34,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Verify current password (you would need to implement this)
         // Then update password if verification passes
-        // This is just a placeholder - implement proper password hashing
         if ($new_password === $confirm_password) {
             $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
             $pwdStmt = $pdo->prepare("UPDATE users SET password = ? WHERE id = ?");
@@ -75,95 +74,76 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             background-color: var(--light);
             color: var(--dark);
             line-height: 1.6;
+            padding-bottom: 70px; /* Space for mobile nav */
         }
         
         .dashboard-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-            display: grid;
-            grid-template-columns: 300px 1fr;
-            gap: 2rem;
+            max-width: 100%;
+            margin: 0;
+            padding: 1rem;
         }
         
-        .profile-sidebar {
+        .profile-header {
             background: white;
             border-radius: 12px;
-            padding: 2rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            height: fit-content;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
         
         .profile-avatar {
-            width: 120px;
-            height: 120px;
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
             background-color: var(--secondary);
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 1.5rem;
             color: var(--primary);
-            font-size: 3rem;
+            font-size: 1.5rem;
             font-weight: bold;
-            border: 4px solid var(--primary-light);
+            border: 3px solid var(--primary-light);
+        }
+        
+        .profile-info {
+            flex: 1;
         }
         
         .profile-name {
-            text-align: center;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             font-weight: 600;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.2rem;
             color: var(--dark);
         }
         
         .profile-email {
-            text-align: center;
             color: var(--primary);
-            margin-bottom: 2rem;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
         }
         
-        .nav-menu {
-            list-style: none;
+        .edit-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 1.2rem;
+            cursor: pointer;
         }
         
-        .nav-item {
-            margin-bottom: 0.5rem;
-        }
-        
-        .nav-link {
-            display: flex;
-            align-items: center;
-            padding: 0.8rem 1rem;
-            border-radius: 8px;
-            text-decoration: none;
-            color: var(--dark);
-            transition: all 0.2s ease;
-            gap: 0.8rem;
-        }
-        
-        .nav-link:hover, .nav-link.active {
-            background-color: var(--secondary);
-            color: var(--primary-dark);
-        }
-        
-        .nav-link i {
-            width: 20px;
-            text-align: center;
-        }
-        
-        .main-content {
+        .profile-section {
             background: white;
             border-radius: 12px;
-            padding: 2rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1rem;
         }
         
         .section-title {
-            font-size: 1.8rem;
+            font-size: 1.2rem;
             font-weight: 700;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
             color: var(--primary-dark);
             display: flex;
             align-items: center;
@@ -171,33 +151,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         .section-title i {
-            font-size: 1.4rem;
+            font-size: 1.1rem;
         }
         
-        .form-group {
-            margin-bottom: 1.5rem;
+        .info-item {
+            margin-bottom: 1.2rem;
         }
         
-        .form-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: var(--dark);
+        .info-label {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-bottom: 0.3rem;
         }
         
-        .form-control {
-            width: 100%;
-            padding: 0.8rem 1rem;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+        .info-value {
             font-size: 1rem;
-            transition: border 0.2s ease;
-        }
-        
-        .form-control:focus {
-            outline: none;
-            border-color: var(--primary-light);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            font-weight: 500;
         }
         
         .btn {
@@ -211,6 +180,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
+            width: 100%;
+            justify-content: center;
+            margin-top: 0.5rem;
         }
         
         .btn-primary {
@@ -222,10 +194,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             background-color: var(--primary-dark);
         }
         
+        .btn-secondary {
+            background-color: #e2e8f0;
+            color: var(--dark);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #cbd5e1;
+        }
+        
         .alert {
             padding: 1rem;
             border-radius: 8px;
             margin-bottom: 1.5rem;
+            font-size: 0.9rem;
         }
         
         .alert-success {
@@ -240,14 +222,74 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border: 1px solid #fecaca;
         }
         
-        .tab-content {
-            display: none;
+        /* Edit Popup */
+        .edit-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: white;
+            z-index: 1000;
+            padding: 1.5rem;
+            overflow-y: auto;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
         }
         
-        .tab-content.active {
+        .edit-popup.active {
+            transform: translateY(0);
+        }
+        
+        .popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .popup-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+        
+        .close-popup {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--dark);
+            cursor: pointer;
+        }
+        
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+        
+        .form-label {
             display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--dark);
+            font-size: 0.9rem;
         }
         
+        .form-control {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border 0.2s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        /* Password toggle */
         .password-toggle {
             position: relative;
         }
@@ -262,163 +304,243 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             opacity: 0.6;
         }
         
-        @media (max-width: 768px) {
-            .dashboard-container {
-                grid-template-columns: 1fr;
+        /* Mobile Navigation */
+        .mobile-nav {
+            display: flex;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            padding: 8px 0;
+        }
+        
+        .mobile-nav-items {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+        }
+        
+        .mobile-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: #64748b;
+            font-size: 0.7rem;
+            padding: 5px;
+        }
+        
+        .mobile-nav-item i {
+            font-size: 1.2rem;
+            margin-bottom: 4px;
+        }
+        
+        .mobile-nav-item.active {
+            color: var(--primary);
+        }
+        
+        @media (min-width: 768px) {
+            body {
+                padding-bottom: 0;
             }
             
-            .profile-sidebar {
-                margin-bottom: 2rem;
+            .dashboard-container {
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 2rem 1rem;
+            }
+            
+            .mobile-nav {
+                display: none;
             }
         }
     </style>
 </head>
 <body>
     <div class="dashboard-container">
-        <aside class="profile-sidebar">
+        <?php if (isset($success)): ?>
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i> <?= $success ?>
+            </div>
+        <?php endif; ?>
+        
+        <?php if (isset($pwd_success)): ?>
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i> <?= $pwd_success ?>
+            </div>
+        <?php endif; ?>
+        
+        <?php if (isset($pwd_error)): ?>
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle"></i> <?= $pwd_error ?>
+            </div>
+        <?php endif; ?>
+        
+        <div class="profile-header">
             <div class="profile-avatar">
                 <?= strtoupper(substr($user['name'], 0, 1)) ?>
             </div>
-            <h2 class="profile-name"><?= htmlspecialchars($user['name']) ?></h2>
-            <p class="profile-email"><?= htmlspecialchars($user['email']) ?></p>
-            
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a href="#profile" class="nav-link active" data-tab="profile">
-                        <i class="fas fa-user"></i> My Profile
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#password" class="nav-link" data-tab="password">
-                        <i class="fas fa-key"></i> Change Password
-                    </a>
-                </li>
-                <li class="nav-item">
-                      <a href="products.php" class="nav-link">
-                            <i class="fas fa-arrow-left mr-2"></i> Continue Shopping
-                        </a>
-                </li>
-                <li class="nav-item">
-                    <a href="logout.php" class="nav-link">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </a>
-                </li>
-            </ul>
-        </aside>
+            <div class="profile-info">
+                <h2 class="profile-name"><?= htmlspecialchars($user['name']) ?></h2>
+                <p class="profile-email"><?= htmlspecialchars($user['email']) ?></p>
+            </div>
+            <button class="edit-btn" id="openEditProfile">
+                <i class="fas fa-edit"></i>
+            </button>
+        </div>
         
-        <main class="main-content">
-            <?php if (isset($success)): ?>
-                <div class="alert alert-success">
-                    <i class="fas fa-check-circle"></i> <?= $success ?>
-                </div>
-            <?php endif; ?>
+        <div class="profile-section">
+            <h3 class="section-title">
+                <i class="fas fa-info-circle"></i> Personal Information
+            </h3>
             
-            <?php if (isset($pwd_success)): ?>
-                <div class="alert alert-success">
-                    <i class="fas fa-check-circle"></i> <?= $pwd_success ?>
-                </div>
-            <?php endif; ?>
-            
-            <?php if (isset($pwd_error)): ?>
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-circle"></i> <?= $pwd_error ?>
-                </div>
-            <?php endif; ?>
-            
-            <!-- Profile Tab -->
-            <div id="profile" class="tab-content active">
-                <h2 class="section-title">
-                    <i class="fas fa-user-edit"></i> Edit Profile
-                </h2>
-                
-                <form method="POST">
-                    <div class="form-group">
-                        <label for="name" class="form-label">Full Name</label>
-                        <input type="text" id="name" name="name" class="form-control" 
-                               value="<?= htmlspecialchars($user['name']) ?>" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" id="email" class="form-control" 
-                               value="<?= htmlspecialchars($user['email']) ?>" disabled>
-                        <small class="text-muted">Contact support to change your email</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="phone" class="form-label">Phone Number</label>
-                        <input type="tel" id="phone" name="phone" class="form-control" 
-                               value="<?= htmlspecialchars($user['phone']) ?>">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="city" class="form-label">City</label>
-                        <input type="text" id="city" name="city" class="form-control" 
-                               value="<?= htmlspecialchars($user['city']) ?>">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="country" class="form-label">Country</label>
-                        <input type="text" id="country" name="country" class="form-control" 
-                               value="<?= htmlspecialchars($user['country']) ?>">
-                    </div>
-                    
-                    <button type="submit" name="update_profile" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Save Changes
-                    </button>
-                </form>
+            <div class="info-item">
+                <div class="info-label">Phone Number</div>
+                <div class="info-value"><?= htmlspecialchars($user['phone'] ?: 'Not provided') ?></div>
             </div>
             
-            <!-- Password Tab -->
-            <div id="password" class="tab-content">
-                <h2 class="section-title">
-                    <i class="fas fa-key"></i> Change Password
-                </h2>
-                
-                <form method="POST">
-                    <div class="form-group password-toggle">
-                        <label for="current_password" class="form-label">Current Password</label>
-                        <input type="password" id="current_password" name="current_password" class="form-control" required>
-                        <i class="fas fa-eye toggle-password"></i>
-                    </div>
-                    
-                    <div class="form-group password-toggle">
-                        <label for="new_password" class="form-label">New Password</label>
-                        <input type="password" id="new_password" name="new_password" class="form-control" required>
-                        <i class="fas fa-eye toggle-password"></i>
-                    </div>
-                    
-                    <div class="form-group password-toggle">
-                        <label for="confirm_password" class="form-label">Confirm New Password</label>
-                        <input type="password" id="confirm_password" name="confirm_password" class="form-control" required>
-                        <i class="fas fa-eye toggle-password"></i>
-                    </div>
-                    
-                    <button type="submit" name="change_password" class="btn btn-primary">
-                        <i class="fas fa-sync-alt"></i> Update Password
-                    </button>
-                </form>
+            <div class="info-item">
+                <div class="info-label">Location</div>
+                <div class="info-value">
+                    <?php 
+                    $location = [];
+                    if (!empty($user['city'])) $location[] = htmlspecialchars($user['city']);
+                    if (!empty($user['country'])) $location[] = htmlspecialchars($user['country']);
+                    echo $location ? implode(', ', $location) : 'Not provided';
+                    ?>
+                </div>
             </div>
-        </main>
+        </div>
+        
+        <div class="profile-section">
+            <h3 class="section-title">
+                <i class="fas fa-key"></i> Account Security
+            </h3>
+            
+            <button class="btn btn-secondary" id="openChangePassword">
+                <i class="fas fa-key"></i> Change Password
+            </button>
+        </div>
+        
+        <button class="btn btn-secondary" onclick="window.location.href='products.php'">
+            <i class="fas fa-arrow-left"></i> Continue Shopping
+        </button>
+        
+        <!-- Edit Profile Popup -->
+        <div class="edit-popup" id="editProfilePopup">
+            <div class="popup-header">
+                <h3 class="popup-title">Edit Profile</h3>
+                <button class="close-popup" id="closeEditProfile">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form method="POST">
+                <div class="form-group">
+                    <label for="name" class="form-label">Full Name</label>
+                    <input type="text" id="name" name="name" class="form-control" 
+                           value="<?= htmlspecialchars($user['name']) ?>" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" id="email" class="form-control" 
+                           value="<?= htmlspecialchars($user['email']) ?>" disabled>
+                    <small style="color: #64748b; font-size: 0.8rem;">Contact support to change your email</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone" class="form-label">Phone Number</label>
+                    <input type="tel" id="phone" name="phone" class="form-control" 
+                           value="<?= htmlspecialchars($user['phone']) ?>">
+                </div>
+                
+                <div class="form-group">
+                    <label for="city" class="form-label">City</label>
+                    <input type="text" id="city" name="city" class="form-control" 
+                           value="<?= htmlspecialchars($user['city']) ?>">
+                </div>
+                
+                <div class="form-group">
+                    <label for="country" class="form-label">Country</label>
+                    <input type="text" id="country" name="country" class="form-control" 
+                           value="<?= htmlspecialchars($user['country']) ?>">
+                </div>
+                
+                <button type="submit" name="update_profile" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+            </form>
+        </div>
+        
+        <!-- Change Password Popup -->
+        <div class="edit-popup" id="changePasswordPopup">
+            <div class="popup-header">
+                <h3 class="popup-title">Change Password</h3>
+                <button class="close-popup" id="closeChangePassword">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form method="POST">
+                <div class="form-group password-toggle">
+                    <label for="current_password" class="form-label">Current Password</label>
+                    <input type="password" id="current_password" name="current_password" class="form-control" required>
+                    <i class="fas fa-eye toggle-password"></i>
+                </div>
+                
+                <div class="form-group password-toggle">
+                    <label for="new_password" class="form-label">New Password</label>
+                    <input type="password" id="new_password" name="new_password" class="form-control" required>
+                    <i class="fas fa-eye toggle-password"></i>
+                </div>
+                
+                <div class="form-group password-toggle">
+                    <label for="confirm_password" class="form-label">Confirm New Password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" class="form-control" required>
+                    <i class="fas fa-eye toggle-password"></i>
+                </div>
+                
+                <button type="submit" name="change_password" class="btn btn-primary">
+                    <i class="fas fa-sync-alt"></i> Update Password
+                </button>
+            </form>
+        </div>
     </div>
     
+    
     <script>
-        // Tab switching functionality
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.addEventListener('click', function(e) {
-                if (this.getAttribute('href').startsWith('#')) {
-                    e.preventDefault();
-                    
-                    // Remove active class from all links and tabs
-                    document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
-                    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-                    
-                    // Add active class to clicked link and corresponding tab
-                    this.classList.add('active');
-                    const tabId = this.getAttribute('data-tab');
-                    document.getElementById(tabId).classList.add('active');
-                }
-            });
+        // Edit Profile Popup
+        const openEditProfile = document.getElementById('openEditProfile');
+        const closeEditProfile = document.getElementById('closeEditProfile');
+        const editProfilePopup = document.getElementById('editProfilePopup');
+        
+        openEditProfile.addEventListener('click', () => {
+            editProfilePopup.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        
+        closeEditProfile.addEventListener('click', () => {
+            editProfilePopup.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+        
+        // Change Password Popup
+        const openChangePassword = document.getElementById('openChangePassword');
+        const closeChangePassword = document.getElementById('closeChangePassword');
+        const changePasswordPopup = document.getElementById('changePasswordPopup');
+        
+        openChangePassword.addEventListener('click', () => {
+            changePasswordPopup.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        
+        closeChangePassword.addEventListener('click', () => {
+            changePasswordPopup.classList.remove('active');
+            document.body.style.overflow = '';
         });
         
         // Password toggle functionality
@@ -434,6 +556,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             });
         });
+        
+        // Close popups when clicking outside content
+        document.querySelectorAll('.edit-popup').forEach(popup => {
+            popup.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+        });
     </script>
 </body>
 </html>
+<?php include 'mobile-menu.php'; ?>

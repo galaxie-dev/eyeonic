@@ -529,6 +529,113 @@ $categories = $categoryStmt->fetchAll();
                 lastScroll = currentScroll;
             });
         }
+
+
+
+
+
+
+
+           
+        // Update cart and wishlist counts on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCartCount();
+            updateWishlistCount();
+        });
+
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.display = 'block';
+            notification.style.animation = 'slideIn 0.5s, fadeOut 0.5s 2.5s';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        function updateCartCount() {
+            fetch('get_cart_count.php')
+                .then(response => response.json())
+                .then(data => {
+                    document.querySelectorAll('.cart-count').forEach(el => {
+                        el.textContent = data.count;
+                        el.style.display = data.count > 0 ? 'flex' : 'none';
+                    });
+                });
+        }
+
+        function updateWishlistCount() {
+            fetch('get_wishlist_count.php')
+                .then(response => response.json())
+                .then(data => {
+                    if(data.count !== undefined) {
+                        document.querySelectorAll('.wishlist-count').forEach(el => {
+                            el.textContent = data.count;
+                            el.style.display = data.count > 0 ? 'flex' : 'none';
+                        });
+                    }
+                });
+        }
+
+        function addToCart(productId) {
+            <?php if(!$isLoggedIn): ?>
+                showNotification('Please login to add items to cart');
+                window.location.href = 'login.php?redirect=' + encodeURIComponent(window.location.href);
+            <?php else: ?>
+                fetch('add_to_cart.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'product_id=' + productId
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if(data.success) {
+                        showNotification('Product added to cart!');
+                        updateCartCount();
+                    } else {
+                        showNotification(data.message || 'Error adding to cart');
+                    }
+                });
+            <?php endif; ?>
+        }
+
+        function toggleWishlist(productId, element) {
+            <?php if(!$isLoggedIn): ?>
+                showNotification('Please login to add items to wishlist');
+                window.location.href = 'login.php?redirect=' + encodeURIComponent(window.location.href);
+            <?php else: ?>
+                const heart = element.querySelector('svg');
+                const isInWishlist = heart.getAttribute('fill') !== 'none';
+                
+                fetch('toggle_wishlist.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'product_id=' + productId
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if(data.success) {
+                        if(data.action === 'added') {
+                            heart.setAttribute('fill', 'red');
+                            showNotification('Added to wishlist!');
+                        } else {
+                            heart.setAttribute('fill', 'none');
+                            showNotification('Removed from wishlist');
+                        }
+                        updateWishlistCount();
+                    } else {
+                        showNotification(data.message || 'Error updating wishlist');
+                    }
+                });
+            <?php endif; ?>
+        }
+    
     </script>
 </body>
+<?php include 'mobile-menu.php'; ?>
 </html>

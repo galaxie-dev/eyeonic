@@ -1,0 +1,11 @@
+MPESA_SHORTCODE=174379
+MPESA_PASSKEY=bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919
+MPESA_CONSUMER_KEY=2qofzV2WBO3USA7mxSWyK7gAaIgtcUiLuW9F99an56edpOGB
+MPESA_CONSUMER_SECRET=LQunlMylY4UmxM5kNDmFttT2l14u4kK8hmIUHJaw4uMnx3fQvI8tIxGY1cGQKBZ5
+MPESA_CALLBACK_URL=https://your-ngrok-url.ngrok.io/mpesa_callback.php
+
+
+
+# // Load environment variables
+# // $dotenv = Dotenv\Dotenv::createImmutable(dirname(__DIR));
+# // $dotenv->load();

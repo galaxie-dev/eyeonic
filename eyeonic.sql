@@ -81,6 +81,9 @@ CREATE TABLE orders (
     FOREIGN KEY (user_id) REFERENCES users(id)
     ALTER TABLE orders ADD COLUMN payment_method VARCHAR(50) DEFAULT NULL;
 );
+-- ALTER TABLE orders ADD COLUMN payment_status ENUM('pending', 'paid', 'failed') DEFAULT 'pending';
+
+
 
 CREATE TABLE order_items (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -145,6 +148,27 @@ CREATE TABLE admins (
     password_hash VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+
+
+CREATE TABLE mpesa_transactions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    merchant_request_id VARCHAR(255),
+    checkout_request_id VARCHAR(255),
+    phone VARCHAR(20) NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    request_data TEXT,
+    callback_data TEXT,
+    result_code VARCHAR(10),
+    result_desc VARCHAR(255),
+    status ENUM('pending', 'completed', 'failed') DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES orders(id)
+);
+
+
 
 
 INSERT INTO admins (full_name, email, password_hash)

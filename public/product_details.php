@@ -3,9 +3,9 @@ require_once '../config/database.php';
 include 'header.php';
 
 // Start session if not already started
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+// if (session_status() === PHP_SESSION_NONE) {
+    // session_start();
+// }
 
 $id = $_GET['id'] ?? null;
 
@@ -350,6 +350,7 @@ $categories = $categoryStmt->fetchAll();
         </section>
     </main>
 
+    <?php include 'mobile-menu.php'; ?>
     <?php include 'footer.php'; ?>
 </body>
 </html>
