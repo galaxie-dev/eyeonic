@@ -10,6 +10,21 @@ if (!isset($_SESSION['user_id'])) {
 
 $userId = $_SESSION['user_id'];
 
+// Initialize wishlistItems array
+$wishlistItems = [];
+
+// Fetch wishlist items if user is logged in
+if (isset($_SESSION['user_id'])) {
+    $wishlistStmt = $pdo->prepare("
+        SELECT product_id 
+        FROM wishlists 
+        WHERE user_id = ?
+    ");
+    $wishlistStmt->execute([$_SESSION['user_id']]);
+    $wishlistItems = $wishlistStmt->fetchAll(PDO::FETCH_COLUMN, 0);
+}
+
+
 // Fetch wishlist items
 $stmt = $pdo->prepare("
     SELECT p.*, c.name AS category_name 

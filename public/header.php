@@ -496,16 +496,10 @@ if(isset($_SESSION['user_id'])) {
                 <?php if(isset($_SESSION['user_id'])): ?>
                  
                        
-
-                          <!-- <a href="dashboard.php" class="nav-link">
-                                <i class="fas fa-user-circle mr-2"></i>
-                                <span>Dashboard</span>                     
-                        </a>                                              -->
-
-                             <a href="orders.php" class="nav-link">
+                           <a href="orders.php" class="nav-link">
                                 <i class="fas fa-shopping-bag mr-2"></i>
                                 <span>My Orders</span>
-                                <span class="cart-count count-badge" style="display: none;">0</span>
+                                <span class="orders-count count-badge" style="display: none;">0</span>
                             </a>
 
                             <a href="logout.php" class="nav-link">
@@ -621,6 +615,39 @@ if(isset($_SESSION['user_id'])) {
             logo.style.transform = `translate(${x * 10 - 5}px, ${y * 10 - 5}px)`;
         });
     });
+
+    
+
+    // Update counts when page loads
+        fetch('get_cart_count.php')
+            .then(response => response.json())
+            .then(data => {
+                document.querySelectorAll('.cart-count').forEach(el => {
+                    el.textContent = data.count;
+                    el.style.display = data.count > 0 ? 'flex' : 'none';
+                });
+            });
+
+        <?php if(isset($_SESSION['user_id'])): ?>
+        // Fetch pending orders count
+        fetch('get_orders_count.php')
+            .then(response => response.json())
+            .then(data => {
+                document.querySelectorAll('.orders-count').forEach(el => {
+                    el.textContent = data.count;
+                    el.style.display = data.count > 0 ? 'flex' : 'none';
+                });
+            });
+
+        fetch('get_wishlist_count.php')
+            .then(response => response.json())
+            .then(data => {
+                document.querySelectorAll('.wishlist-count').forEach(el => {
+                    el.textContent = data.count;
+                    el.style.display = data.count > 0 ? 'flex' : 'none';
+                });
+            });
+        <?php endif; ?>
     </script>
 </body>
 </html>

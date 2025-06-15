@@ -5,29 +5,29 @@
             <h3 class="gallery-title">Our Gallery</h3>
             <div class="gallery-grid">
                 <div class="gallery-item">
-                    <img src="img/catt9.png">
+                    <img src="public/img/catt9.png">
                     <div class="gallery-overlay">
                         <span>Classic Collection</span>
                     </div>
                 </div>
                 <div class="gallery-item">
-                    <img src="img/catt11.png">
+                    <img src="public/img/catt11.png">
                     <div class="gallery-overlay">
                         <span>Modern Styles</span>
                     </div>
                 </div>
                 <div class="gallery-item">
-                    <img src="img/catt6.png">
+                    <img src="public/img/catt6.png">
                     <div class="gallery-overlay">
                         <span>Sunglasses</span>
                     </div>
                 </div>
                 <div class="gallery-item">
-                    <img src="img/catt2.png" alt="Designer frames">
+                    <img src="public/img/catt2.png" alt="Designer frames">
                     <div class="gallery-overlay">
                         <span>Designer Series</span>
                     </div>
-                </div>
+     
             </div>
         </div>
     </div>

@@ -5,6 +5,21 @@ require_once '../config/database.php';
 
 $categoryId = $_GET['category'] ?? null;
 
+
+// Initialize wishlistItems array
+$wishlistItems = [];
+
+// Fetch wishlist items if user is logged in
+if (isset($_SESSION['user_id'])) {
+    $wishlistStmt = $pdo->prepare("
+        SELECT product_id 
+        FROM wishlists 
+        WHERE user_id = ?
+    ");
+    $wishlistStmt->execute([$_SESSION['user_id']]);
+    $wishlistItems = $wishlistStmt->fetchAll(PDO::FETCH_COLUMN, 0);
+}
+
 // Fetch only featured products
 $stmt = $pdo->prepare("
     SELECT p.*, c.name AS category_name
@@ -465,38 +480,58 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
             <?php endif; ?>
         }
 
+
         function toggleWishlist(productId, element) {
-            <?php if(!$isLoggedIn): ?>
-                showNotification('Please login to add items to wishlist');
-                window.location.href = 'login.php?redirect=' + encodeURIComponent(window.location.href);
-            <?php else: ?>
-                const heart = element.querySelector('svg');
-                const isInWishlist = heart.getAttribute('fill') !== 'none';
-                
-                fetch('toggle_wishlist.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: 'product_id=' + productId
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if(data.success) {
-                        if(data.action === 'added') {
-                            heart.setAttribute('fill', 'red');
-                            showNotification('Added to wishlist!');
-                        } else {
-                            heart.setAttribute('fill', 'none');
-                            showNotification('Removed from wishlist');
-                        }
-                        updateWishlistCount();
-                    } else {
-                        showNotification(data.message || 'Error updating wishlist');
+    <?php if(!isset($_SESSION['user_id'])): ?>
+        showNotification('Please login to add items to wishlist');
+        window.location.href = 'login.php?redirect=' + encodeURIComponent(window.location.pathname);
+        return;
+    <?php endif; ?>
+    
+    const heart = element.querySelector('svg');
+    
+    fetch('toggle_wishlist.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'product_id=' + productId
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.success) {
+            if(data.action === 'added') {
+                heart.setAttribute('fill', 'red');
+                showNotification('Added to wishlist!');
+            } else {
+                heart.setAttribute('fill', 'none');
+                showNotification('Removed from wishlist');
+                // Special handling for wishlist page
+                if (window.location.pathname.includes('wishlist.php')) {
+                    element.closest('.product-card').remove();
+                    // Show empty message if no items left
+                    if (document.querySelectorAll('.product-card').length === 0) {
+                        document.querySelector('.product-grid').innerHTML = `
+                            <div class="wishlist-empty">
+                                <p>Your wishlist is currently empty.</p>
+                                <a href="products.php" class="btn-continue" style="margin-top: 1rem;">
+                                    <i class="fas fa-arrow-left mr-2"></i> Browse Products
+                                </a>
+                            </div>
+                        `;
                     }
-                });
-            <?php endif; ?>
+                }
+            }
+            updateWishlistCount();
+        } else {
+            showNotification(data.message || 'Error updating wishlist');
         }
+    })
+    .catch(error => {
+        showNotification('Network error. Please try again.');
+        console.error('Error:', error);
+    });
+}
     </script>
 
 </body>

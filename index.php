@@ -1,9 +1,23 @@
 <?php
 // include 'header.php';
-require_once 'config/database.php';
  include 'header.php'; 
 
 $categoryId = $_GET['category'] ?? null;
+
+
+// Initialize wishlistItems array
+$wishlistItems = [];
+
+// Fetch wishlist items if user is logged in
+if (isset($_SESSION['user_id'])) {
+    $wishlistStmt = $pdo->prepare("
+        SELECT product_id 
+        FROM wishlists 
+        WHERE user_id = ?
+    ");
+    $wishlistStmt->execute([$_SESSION['user_id']]);
+    $wishlistItems = $wishlistStmt->fetchAll(PDO::FETCH_COLUMN, 0);
+}
 
 // Fetch only featured products
 $stmt = $pdo->prepare("
@@ -14,6 +28,25 @@ $stmt = $pdo->prepare("
 ");
 $stmt->execute();
 $products = $stmt->fetchAll();
+
+// Initialize wishlistItems array
+$wishlistItems = [];
+
+// Fetch wishlist items if user is logged in
+if (isset($_SESSION['user_id'])) {
+    $wishlistStmt = $pdo->prepare("
+        SELECT product_id 
+        FROM wishlists 
+        WHERE user_id = ?
+    ");
+    $wishlistStmt->execute([$_SESSION['user_id']]);
+    $wishlistItems = $wishlistStmt->fetchAll(PDO::FETCH_COLUMN, 0);
+}
+
+$categoryId = $_GET['category'] ?? null;
+
+
+
 
 // Fetch categories for navigation
 $categoryStmt = $pdo->query("SELECT * FROM categories");
@@ -56,13 +89,16 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
     <!-- Splide Carousel CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/css/splide.min.css">
-    <link href="public/style.css" rel="stylesheet">
+        <link href="public/style.css" rel="stylesheet">
 </head>
 <body>
 
+      <!-- Notification element -->
+    <div id="notification" class="notification"></div>
+
     <main>
         <!-- Hero Carousel -->
-        <section class="splide" aria-label="Eyeonic Hero Carousel">
+         <section class="splide" aria-label="Eyeonic Hero Carousel">
          
             
             <div class="splide__track">
@@ -95,6 +131,8 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
             </div>
         </section>
 
+        <?php include 'categories.php'; ?>
+      
         <!-- Featured Products Section -->
         <section class="products-section">
             <?php include 'public/search-bar.php'; ?>
@@ -102,129 +140,147 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
             <?php if (empty($products)): ?>
                 <p class="no-products">No featured products found.</p>
             <?php else: ?>
-                
-            <div class="product-grid">
-                <?php foreach ($products as $product): 
-                    $imagePath = getValidImagePath($product['image_url'] ?? $product['image_path']);
-                    $hasDiscount = $product['discount_price'] && $product['discount_price'] < $product['price'];
-                    $discountPercentage = $hasDiscount ? calculateDiscountPercentage($product['price'], $product['discount_price']) : 0;
-                ?>
-                    <div class="product-card">
-                        <div class="product-bg"></div>
-                        
-                        <?php if ($hasDiscount && $discountPercentage > 0): ?>
-                            <span class="badge"><?php echo $discountPercentage; ?>% OFF</span>
-                        <?php endif; ?>
-                        
-                        <div class="wishlist">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                            </svg>
-                        </div>
-                        
-                        <div class="product-image-container">
-                            <img src="<?php echo $imagePath; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>" class="product-image">
-                        </div>
-                        
-                        <div class="product-content">
-                            <a href="product_details.php?id=<?php echo $product['id']; ?>" class="product-title"><?php echo htmlspecialchars($product['name']); ?></a>
-                            <p class="product-brand">by <?php echo htmlspecialchars($product['brand']); ?></p>
+                <div class="product-grid">
+                    <?php foreach ($products as $product): 
+                        $imagePath = getValidImagePath($product['image_url'] ?? $product['image_path']);
+                        $hasDiscount = $product['discount_price'] && $product['discount_price'] < $product['price'];
+                        $discountPercentage = $hasDiscount ? calculateDiscountPercentage($product['price'], $product['discount_price']) : 0;
+                        $isInWishlist = in_array($product['id'], $wishlistItems);
+                    ?>
+                        <div class="product-card">
+                            <div class="product-bg"></div>
                             
-                            <div class="product-features">
-                                <div class="feature">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <circle cx="12" cy="12" r="5"></circle>
-                                    </svg>
-                                    <?php echo htmlspecialchars($product['category_name'] ?? 'Uncategorized'); ?>
-                                </div>
-                                <div class="feature">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M17 18a5 5 0 0 0-10 0"></path>
-                                    </svg>
-                                    <?php echo date('M j, Y', strtotime($product['created_at'])); ?>
-                                </div>
+                            <?php if ($hasDiscount && $discountPercentage > 0): ?>
+                                <span class="badge"><?php echo $discountPercentage; ?>% OFF</span>
+                            <?php endif; ?>
+                            
+                            <div class="wishlist" onclick="toggleWishlist(<?php echo $product['id']; ?>, this)">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="<?php echo $isInWishlist ? 'red' : 'none'; ?>" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                </svg>
                             </div>
                             
-                            <div class="price-container">
-                                <span class="current-price">KES <?php echo number_format($hasDiscount ? $product['discount_price'] : $product['price'], 2); ?></span>
-                                <?php if ($hasDiscount): ?>
-                                    <span class="old-price">KES <?php echo number_format($product['price'], 2); ?></span>
-                                <?php endif; ?>
+                            <div class="product-image-container">
+                                <img src="<?php echo $imagePath; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>" class="product-image">
                             </div>
                             
-                      <div class="product-actions">
-                            <a href="public/cart.php?id=<?php echo $product['id']; ?>" class="add-to-cart">
-                                <span class="text">Add to Cart</span>
-                            </a>
-                            <a href="public/product_details.php?id=<?php echo $product['id']; ?>" class="view-details">
-                                <span class="text">Details</span>
-                            </a>
+                            <div class="product-content">
+                                <a href="product_details.php?id=<?php echo $product['id']; ?>" class="product-title"><?php echo htmlspecialchars($product['name']); ?></a>
+                                <p class="product-brand">by <?php echo htmlspecialchars($product['brand']); ?></p>
+                                
+                                <div class="product-features">
+                                    <div class="feature">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="5"></circle>
+                                        </svg>
+                                        <?php echo htmlspecialchars(substr($product['category_name'], 0, 10 ?? 'Uncategorized')); ?>
+
+                                       
+                                    </div>
+                                    <div class="feature">
+                                        <i class="fas fa-calendar-alt"></i>
+                                        <?php echo date(' M j, Y', strtotime($product[ 'created_at'])); ?>
+                                    </div>
+                                </div>
+                                
+                                <div class="price-container">
+                                    <span class="current-price">KES <?php echo number_format($hasDiscount ? $product['discount_price'] : $product['price'], 2); ?></span>
+                                    <?php if ($hasDiscount): ?>
+                                        <span class="old-price">KES <?php echo number_format($product['price'], 2); ?></span>
+                                    <?php endif; ?>
+                                </div>
+                                
+                                <div class="product-actions">
+                                    <a href="javascript:void(0);" onclick="addToCart(<?php echo $product['id']; ?>)" class="add-to-cart">
+                                        <span class="text">Add to Cart</span>
+                                    </a>
+                                    <a href="public/product_details.php?id=<?php echo $product['id']; ?>" class="view-details">
+                                        <span class="text">View Details</span>
+                                    </a>
+                                </div>
+                            </div>
                         </div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
+                    <?php endforeach; ?>
+                </div>
             <?php endif; ?>
         </section>
 
 
 
 
-
         <!-- Eyewear Advice Section -->
 <section class="eyewear-advice">
-    <div class="advice-container">
-        <h2 class="section-title">Eyewear Buying Guide</h2>
-        <p class="section-subtitle">Expert advice to help you find your perfect pair</p>
+    <div class="advice-container">      
+            <h2 class="section-title">Guide Your Eye</h2>
+            <p class="section-subtitle">Expert advice to help you find your perfect pair</p>
+           
+        
         
         <div class="advice-grid">
             <!-- Frame Selection Advice -->
             <div class="advice-card">
-                <div class="advice-icon">
-                    <i class="fas fa-glasses"></i>
+                <div class="card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <circle cx="12" cy="12" r="4"></circle>
+                        <line x1="4.93" y1="4.93" x2="9.17" y2="9.17"></line>
+                        <line x1="14.83" y1="14.83" x2="19.07" y2="19.07"></line>
+                        <line x1="14.83" y1="9.17" x2="19.07" y2="4.93"></line>
+                        <line x1="4.93" y1="19.07" x2="9.17" y2="14.83"></line>
+                    </svg>
                 </div>
                 <h3>Choosing the Right Frames</h3>
                 <ul>
-                    <li>Match frame shape to your face shape</li>
-                    <li>Consider your skin tone for color selection</li>
-                    <li>Ensure proper bridge fit for comfort</li>
-                    <li>Think about your lifestyle needs</li>
+                    <li><span class="bullet-icon">→</span> Match frame shape to your face shape</li>
+                    <li><span class="bullet-icon">→</span> Consider your skin tone for color selection</li>
+                    <li><span class="bullet-icon">→</span> Ensure proper bridge fit for comfort</li>
+                    <li><span class="bullet-icon">→</span> Think about your lifestyle needs</li>
                 </ul>
-                <a href="#" class="learn-more">Read More</a>
+                <a href="public/products.php" class="learn-more">Discover your frame style <span class="arrow">→</span></a>
             </div>
             
             <!-- Lens Selection Advice -->
             <div class="advice-card">
-                <div class="advice-icon">
-                    <i class="fas fa-eye"></i>
+                <div class="card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
+                        <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
+                        <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+                        <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
+                    </svg>
                 </div>
                 <h3>Lens Options Explained</h3>
                 <ul>
-                    <li>Single vision vs. progressive lenses</li>
-                    <li>Anti-reflective coating benefits</li>
-                    <li>Blue light blocking technology</li>
-                    <li>Photochromic (transition) lenses</li>
+                    <li><span class="bullet-icon">→</span> Single vision vs. progressive lenses</li>
+                    <li><span class="bullet-icon">→</span> Anti-reflective coating benefits</li>
+                    <li><span class="bullet-icon">→</span> Blue light blocking technology</li>
+                    <li><span class="bullet-icon">→</span> Photochromic (transition) lenses</li>
                 </ul>
-                <a href="#" class="learn-more">Read More</a>
+                <a href="public/products.php" class="learn-more">Explore lens technology <span class="arrow">→</span></a>
             </div>
             
             <!-- Eye Health Tips -->
             <div class="advice-card">
-                <div class="advice-icon">
-                    <i class="fas fa-heartbeat"></i>
+                <div class="card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                    </svg>
                 </div>
                 <h3>Eye Health Tips</h3>
                 <ul>
-                    <li>Get regular eye exams</li>
-                    <li>Follow the 20-20-20 rule for digital strain</li>
-                    <li>Wear UV-protective sunglasses outdoors</li>
-                    <li>Keep lenses clean for optimal vision</li>
+                    <li><span class="bullet-icon">→</span> Get regular eye exams</li>
+                    <li><span class="bullet-icon">→</span> Follow the 20-20-20 rule for digital strain</li>
+                    <li><span class="bullet-icon">→</span> Wear UV-protective sunglasses outdoors</li>
+                    <li><span class="bullet-icon">→</span> Keep lenses clean for optimal vision</li>
                 </ul>
-                <a href="#" class="learn-more">Read More</a>
+                <a href="public/products.php" class="learn-more">Learn eye care essentials <span class="arrow">→</span></a>
             </div>
         </div>
     </div>
 </section>
+
+
 
 <!-- Customer Testimonials -->
 <section class="testimonials">
@@ -242,8 +298,8 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
                 </div>
                 <p>"The most comfortable glasses I've ever worn. Perfect for my active lifestyle!"</p>
                 <div class="customer">
-                    <img src="img/customer1.jpg" alt="Sarah J.">
-                    <span>Sarah J.</span>
+                    <img src="public/img/catt7.png" alt="Sarah">
+                    <span>Sarah</span>
                 </div>
             </div>
             
@@ -257,8 +313,8 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
                 </div>
                 <p>"Great selection of frames and the blue light lenses have reduced my eye strain significantly."</p>
                 <div class="customer">
-                    <img src="img/customer2.jpg" alt="Michael T.">
-                    <span>Michael T.</span>
+                    <img src="public/img/catt6.png" alt="Michael">
+                    <span>Michael</span>
                 </div>
             </div>
             
@@ -272,54 +328,15 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
                 </div>
                 <p>"Fast shipping and excellent customer service when I needed an adjustment."</p>
                 <div class="customer">
-                    <img src="img/customer3.jpg" alt="Priya K.">
-                    <span>Priya K.</span>
+                    <img src="public/img/catt5.png" alt="Monique">
+                    <span>Monique</span>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Eye Care Services -->
-<section class="services">
-    <div class="services-container">
-        <h2 class="section-title">Our Eye Care Services</h2>
-        
-        <div class="services-grid">
-            <div class="service-card">
-                <div class="service-icon">
-                    <i class="fas fa-eye-dropper"></i>
-                </div>
-                <h3>Prescription Lenses</h3>
-                <p>Precision-crafted lenses tailored to your vision needs with the latest optical technology.</p>
-            </div>
-            
-            <div class="service-card">
-                <div class="service-icon">
-                    <i class="fas fa-sun"></i>
-                </div>
-                <h3>Sunglasses</h3>
-                <p>100% UV protection with prescription options available in stylish designer frames.</p>
-            </div>
-            
-            <div class="service-card">
-                <div class="service-icon">
-                    <i class="fas fa-desktop"></i>
-                </div>
-                <h3>Computer Glasses</h3>
-                <p>Specialized lenses to reduce digital eye strain and block harmful blue light.</p>
-            </div>
-            
-            <div class="service-card">
-                <div class="service-icon">
-                    <i class="fas fa-child"></i>
-                </div>
-                <h3>Kids' Eyewear</h3>
-                <p>Durable, comfortable frames designed for active children with impact-resistant lenses.</p>
-            </div>
-        </div>
-    </div>
-</section>
+
     </main>
 
             <section class="commitment-section">
@@ -342,63 +359,143 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
             </div>
         </section>
 
-
-        <!-- Mobile Bottom Navigation -->
-<div class="mobile-nav">
-    <div class="mobile-nav-items">
-        <a href="public/index.php" class="mobile-nav-item active">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                <polyline points="9 22 9 12 15 12 15 22"></polyline>
-            </svg>
-            Home
-        </a>
-        <a href="public/products.php" class="mobile-nav-item">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="7" height="7"></rect>
-                <rect x="14" y="3" width="7" height="7"></rect>
-                <rect x="14" y="14" width="7" height="7"></rect>
-                <rect x="3" y="14" width="7" height="7"></rect>
-            </svg>
-            Shop
-        </a>
-        <a href="public/cart.php" class="mobile-nav-item">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="9" cy="21" r="1"></circle>
-                <circle cx="20" cy="21" r="1"></circle>
-                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-            </svg>
-            Cart
-        </a>
-        <a href="dashboard.php" class="mobile-nav-item">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-            </svg>
-            Account
-        </a>
-    </div>
-</div>
-
     <!-- Splide Carousel JS -->
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Splide carousel
+        new Splide('.splide', {
+            type: 'loop',
+            autoplay: true,
+            interval: 5000,
+            pauseOnHover: false,
+            arrows: true,
+            pagination: true,
+        }).mount();
+    });
+</script>
     <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/js/splide.min.js"></script>
     <script>
+        // Update cart and wishlist counts on page load
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize hero carousel
-            new Splide('.splide', {
-                type: 'loop',
-                autoplay: true,
-                interval: 5000,
-                pauseOnHover: false,
-                arrows: false,
-                pagination: false,
-                speed: 1000,
-            }).mount();
+            updateCartCount();
+            updateWishlistCount();
         });
+
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.display = 'block';
+            notification.style.animation = 'slideIn 0.5s, fadeOut 0.5s 2.5s';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        function updateCartCount() {
+            fetch('get_cart_count.php')
+                .then(response => response.json())
+                .then(data => {
+                    document.querySelectorAll('.cart-count').forEach(el => {
+                        el.textContent = data.count;
+                        el.style.display = data.count > 0 ? 'flex' : 'none';
+                    });
+                });
+        }
+
+        function updateWishlistCount() {
+            fetch('get_wishlist_count.php')
+                .then(response => response.json())
+                .then(data => {
+                    if(data.count !== undefined) {
+                        document.querySelectorAll('.wishlist-count').forEach(el => {
+                            el.textContent = data.count;
+                            el.style.display = data.count > 0 ? 'flex' : 'none';
+                        });
+                    }
+                });
+        }
+
+        function addToCart(productId) {
+            <?php if(!$isLoggedIn): ?>
+                showNotification('Please login to add items to cart');
+                window.location.href = 'login.php?redirect=' + encodeURIComponent(window.location.href);
+            <?php else: ?>
+                fetch('add_to_cart.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'product_id=' + productId
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if(data.success) {
+                        showNotification('Product added to cart!');
+                        updateCartCount();
+                    } else {
+                        showNotification(data.message || 'Error adding to cart');
+                    }
+                });
+            <?php endif; ?>
+        }
+
+
+        function toggleWishlist(productId, element) {
+    <?php if(!isset($_SESSION['user_id'])): ?>
+        showNotification('Please login to add items to wishlist');
+        window.location.href = 'login.php?redirect=' + encodeURIComponent(window.location.pathname);
+        return;
+    <?php endif; ?>
+    
+    const heart = element.querySelector('svg');
+    
+    fetch('toggle_wishlist.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'product_id=' + productId
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.success) {
+            if(data.action === 'added') {
+                heart.setAttribute('fill', 'red');
+                showNotification('Added to wishlist!');
+            } else {
+                heart.setAttribute('fill', 'none');
+                showNotification('Removed from wishlist');
+                // Special handling for wishlist page
+                if (window.location.pathname.includes('wishlist.php')) {
+                    element.closest('.product-card').remove();
+                    // Show empty message if no items left
+                    if (document.querySelectorAll('.product-card').length === 0) {
+                        document.querySelector('.product-grid').innerHTML = `
+                            <div class="wishlist-empty">
+                                <p>Your wishlist is currently empty.</p>
+                                <a href="products.php" class="btn-continue" style="margin-top: 1rem;">
+                                    <i class="fas fa-arrow-left mr-2"></i> Browse Products
+                                </a>
+                            </div>
+                        `;
+                    }
+                }
+            }
+            updateWishlistCount();
+        } else {
+            showNotification(data.message || 'Error updating wishlist');
+        }
+    })
+    .catch(error => {
+        showNotification('Network error. Please try again.');
+        console.error('Error:', error);
+    });
+}
     </script>
 
 </body>
 </html>
 <?php include 'public/mobile-menu.php'; ?>
-
-<?php include 'public/footer.php'; ?>
+<?php include 'footer.php'; ?>

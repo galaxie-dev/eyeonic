@@ -180,7 +180,7 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <h3 class="font-medium text-gray-900">Order #<?= $order['id'] ?></h3>
                                     <p class="text-sm text-gray-500 mt-1">
                                         <i class="far fa-calendar-alt mr-1"></i>
-                                        <?= date('F j, Y', strtotime($order['created_at'])) ?>
+                                        <?= date('F j, Y g:i a', strtotime($order['created_at'])) ?>
                                     </p>
                                 </div>
                                 
@@ -213,13 +213,13 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <div class="order-details border-t border-gray-100" id="details-<?= $order['id'] ?>">
                             <?php
                             // Fetch order items for this order
-                            $itemsQuery = "
-                                SELECT oi.*, p.name, p.image_url, p.price, v.type as variant_type, v.value as variant_value
-                                FROM order_items oi
-                                JOIN products p ON oi.product_id = p.id
-                                LEFT JOIN product_variants v ON oi.variant_id = v.id
-                                WHERE oi.order_id = ?
-                            ";
+                       $itemsQuery = "
+                                    SELECT oi.*, p.name, p.image_path, p.price, v.type as variant_type, v.value as variant_value
+                                    FROM order_items oi
+                                    JOIN products p ON oi.product_id = p.id
+                                    LEFT JOIN product_variants v ON oi.variant_id = v.id
+                                    WHERE oi.order_id = ?
+                                ";
                             $stmt = $pdo->prepare($itemsQuery);
                             $stmt->execute([$order['id']]);
                             $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -230,10 +230,14 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 
                                 <div class="space-y-4">
                                     <?php foreach ($items as $item): ?>
+
                                         <div class="flex items-start gap-4">
-                                            <img src="<?= $item['image_url'] ? htmlspecialchars($item['image_url']) : 'https://via.placeholder.com/150' ?>" 
-                                                 alt="<?= htmlspecialchars($item['name']) ?>" 
-                                                 class="product-image">
+                                            <?php
+                                            $imagePath = !empty($item['image_path']) ? '../' . $item['image_path'] : '../assets/no-image.png';
+                                            ?>
+                                            <img src="<?= htmlspecialchars($imagePath) ?>" 
+                                                alt="<?= htmlspecialchars($item['name']) ?>" 
+                                                class="product-image">
                                             
                                             <div class="flex-1">
                                                 <h5 class="font-medium"><?= htmlspecialchars($item['name']) ?></h5>
