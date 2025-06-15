@@ -1,13 +1,14 @@
 <?php
 require_once '../config/database.php';
 session_start();
-include 'header.php';
+
 
 // Redirect if not logged in
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit;
 }
+
 
 // Fetch user details from database
 $stmt = $pdo->prepare("SELECT name, email, phone, address, city, zip_code, country FROM users WHERE id = ?");
@@ -124,6 +125,8 @@ if (!empty($cart)) {
 
 $deliveryFee = calculateDeliveryFee($productTotal);
 $total = $productTotal + $deliveryFee;
+
+include 'header.php';
 ?>
 
 <!DOCTYPE html>

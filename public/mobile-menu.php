@@ -1,7 +1,5 @@
 <head>
 <style>
-    /* Mobile Bottom Navigation */
-    /* Mobile Bottom Navigation */
     :root {
         --primary: #2563eb;
         --primary-light: #3b82f6;
@@ -11,6 +9,8 @@
         --light: #f8fafc;
         --accent: #f43f5e;
         --success: #10b981;
+        --glass-bg: rgba(255, 255, 255, 0.85);
+        --glass-border: rgba(255, 255, 255, 0.2);
     }
     
     /* Hide mobile nav on desktop screens */
@@ -20,23 +20,47 @@
         }
     }
     
-    /* Show mobile nav on mobile screens by default */
+    /* Premium Glass Morphism Mobile Nav */
     .mobile-nav {
         display: block;
         position: fixed;
-        bottom: 0;
+        bottom: 1rem;
+        left: 50%;
+        transform: translateX(-50%);
+        width: calc(100% - 2rem);
+        max-width: 400px;
+        background: var(--glass-bg);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--glass-border);
+        border-radius: 24px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 
+                    0 4px 8px rgba(0, 0, 0, 0.05),
+                    inset 0 0 12px rgba(255, 255, 255, 0.3);
+        z-index: 1000;
+        padding: 12px;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        overflow: hidden;
+    }
+
+    .mobile-nav::before {
+        content: '';
+        position: absolute;
+        top: 0;
         left: 0;
         right: 0;
-        background: white;
-        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-        z-index: 1000;
-        padding: 8px 0;
+        height: 1px;
+        background: linear-gradient(90deg, 
+                    rgba(255,255,255,0) 0%, 
+                    rgba(255,255,255,0.6) 50%, 
+                    rgba(255,255,255,0) 100%);
     }
 
     .mobile-nav-items {
         display: flex;
         justify-content: space-around;
         align-items: center;
+        position: relative;
     }
 
     .mobile-nav-item {
@@ -45,36 +69,69 @@
         flex-direction: column;
         align-items: center;
         text-decoration: none;
-        color: #64748b;
-        font-size: 0.7rem;
-        padding: 5px;
+        color: var(--dark);
+        font-size: 0.65rem;
+        font-weight: 500;
+        padding: 8px 12px;
+        border-radius: 16px;
+        transition: all 0.3s ease;
+        z-index: 1;
     }
 
     .mobile-nav-item svg {
-        width: 20px;
-        height: 20px;
+        width: 22px;
+        height: 22px;
         margin-bottom: 4px;
+        stroke-width: 2;
+        transition: all 0.3s ease;
     }
 
     .mobile-nav-item.active {
         color: var(--primary);
     }
 
+    .mobile-nav-item.active svg {
+        stroke: var(--primary);
+        transform: translateY(-4px);
+    }
+
+    /* Active item highlight */
+    .mobile-nav-highlight {
+        position: absolute;
+        bottom: 8px;
+        left: 0;
+        width: 20%;
+        height: calc(100% - 16px);
+        background: rgba(37, 99, 235, 0.1);
+        border-radius: 14px;
+        border: 1px solid rgba(37, 99, 235, 0.15);
+        backdrop-filter: blur(4px);
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        z-index: 0;
+    }
+
     /* Count badge styles */
     .count-badge {
         position: absolute;
         top: -2px;
-        right: 8px;
+        right: 0;
         background-color: var(--accent);
         color: white;
         border-radius: 50%;
-        width: 16px;
-        height: 16px;
+        width: 18px;
+        height: 18px;
         font-size: 10px;
+        font-weight: 700;
         display: flex;
         align-items: center;
         justify-content: center;
-        line-height: 1;
+        box-shadow: 0 2px 8px rgba(244, 63, 94, 0.3);
+        transform: scale(1);
+        transition: transform 0.2s ease;
+    }
+
+    .mobile-nav-item:hover .count-badge {
+        transform: scale(1.15);
     }
 
     /* Wishlist icon specific styling */
@@ -82,12 +139,62 @@
         position: relative;
         display: inline-block;
     }
+
+    /* Pulse animation for active item */
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.2); }
+        70% { box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+    }
+
+    .mobile-nav-item.active::after {
+        content: '';
+        position: absolute;
+        top: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 6px;
+        height: 6px;
+        background: var(--primary);
+        border-radius: 50%;
+        animation: pulse 1.5s infinite;
+    }
+
+    /* Hover effects */
+    .mobile-nav-item:hover {
+        color: var(--primary);
+    }
+
+    .mobile-nav-item:hover svg {
+        stroke: var(--primary);
+        transform: translateY(-2px);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 480px) {
+        .mobile-nav {
+            bottom: 0.5rem;
+            width: calc(100% - 1rem);
+            border-radius: 20px;
+        }
+        
+        .mobile-nav-item {
+            padding: 6px 8px;
+            font-size: 0.6rem;
+        }
+        
+        .mobile-nav-item svg {
+            width: 20px;
+            height: 20px;
+        }
+    }
 </style>
 </head>
 
 <body>
-<!-- Mobile Bottom Navigation -->
+<!-- Premium Glass Mobile Navigation -->
 <div class="mobile-nav">
+    <div class="mobile-nav-highlight"></div>
     <div class="mobile-nav-items">
         <a href="index.php" class="mobile-nav-item">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -113,6 +220,15 @@
             </svg>
             <span class="cart-count count-badge" style="display: none;">0</span>
             Cart
+        </a>
+        <a href="orders.php" class="mobile-nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <path d="M16 10a4 4 0 0 1-8 0"></path>
+            </svg>
+            <span class="order-count count-badge" style="display: none;">0</span>
+            My Orders
         </a>
         <a href="wishlist.php" class="mobile-nav-item">
             <div class="wishlist-icon">
@@ -162,13 +278,65 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Highlight current page in mobile nav
     const currentPage = window.location.pathname.split('/').pop() || 'index.php';
-    document.querySelectorAll('.mobile-nav-item').forEach(item => {
+    const navItems = document.querySelectorAll('.mobile-nav-item');
+    //const highlight = document.querySelector('.mobile-nav-highlight');
+    
+    navItems.forEach((item, index) => {
         item.classList.remove('active');
         if (item.getAttribute('href') === currentPage) {
             item.classList.add('active');
         }
     });
+    
+    // Add click animation
+    navItems.forEach(item => {
+        item.addEventListener('click', function() {
+            // Remove active class from all items
+            navItems.forEach(navItem => navItem.classList.remove('active'));
+            
+            // Add active class to clicked item
+            this.classList.add('active');
+            
+            // Move highlight
+            const index = Array.from(navItems).indexOf(this);
+            const itemWidth = 100 / navItems.length;
+            highlight.style.left = `${index * itemWidth}%`;
+            
+            // Add ripple effect
+            const ripple = document.createElement('span');
+            ripple.style.position = 'absolute';
+            ripple.style.borderRadius = '50%';
+            ripple.style.backgroundColor = 'rgba(37, 99, 235, 0.2)';
+            ripple.style.transform = 'scale(0)';
+            ripple.style.animation = 'ripple 0.6s linear';
+            ripple.style.pointerEvents = 'none';
+            
+            const rect = this.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            ripple.style.width = ripple.style.height = `${size}px`;
+            ripple.style.left = `${event.clientX - rect.left - size/2}px`;
+            ripple.style.top = `${event.clientY - rect.top - size/2}px`;
+            
+            this.appendChild(ripple);
+            
+            setTimeout(() => {
+                ripple.remove();
+            }, 600);
+        });
+    });
 });
+
+// Add ripple animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes ripple {
+        to {
+            transform: scale(2.5);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
 
 // You can keep these separate functions if you need to call them from other parts of your code
 function updateCartCount() {

@@ -1,7 +1,7 @@
 <?php
 include 'header.php';
 require_once '../config/database.php';
-session_start();
+
 
 $categoryId = $_GET['category'] ?? null;
 
@@ -89,8 +89,7 @@ $products = $stmt->fetchAll();
 if (empty($products)) {
     echo '<p class="empty-message">No products found' . ($search ? ' matching "' . htmlspecialchars($search) . '"' : '') . '.</p>';
 } else {
-    // Display your products table here
-    // ...
+  
 }
 ?>
 <!DOCTYPE html>
@@ -169,10 +168,11 @@ if (empty($products)) {
                             
                       <div class="product-actions">
                             <a href="cart.php?id=<?php echo $product['id']; ?>" class="add-to-cart">
+                                <i class="fas fa-shopping-cart"></i>
                                 <span class="text">Add to Cart</span>
                             </a>
                             <a href="product_details.php?id=<?php echo $product['id']; ?>" class="view-details">
-                                <span class="text">Details</span>
+                                <span class="text">View Details</span>
                             </a>
                         </div>
                         </div>
@@ -188,4 +188,4 @@ if (empty($products)) {
 </html>
 <?php include 'mobile-menu.php'; ?>
 
-<?php include 'public/footer.php'; ?>
+<?php include 'footer.php'; ?>

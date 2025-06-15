@@ -1,4 +1,5 @@
 <?php
+include 'header.php';
 require_once '../includes/auth.php';
 require_once '../config/database.php';
 requireLogin();
@@ -44,6 +45,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+
+
 ?>
 
 <!DOCTYPE html>

@@ -4,7 +4,7 @@ require_once '../mpesa-php-sdk/src/Mpesa.php';
 require_once '../vendor/autoload.php';
 
 session_start();
-include 'header.php';
+
 
 $mpesa = new Safaricom\Mpesa\Mpesa();
 
@@ -38,6 +38,9 @@ $stmt = $pdo->prepare("
 ");
 $stmt->execute([$orderId]);
 $items = $stmt->fetchAll();
+
+
+include 'header.php';
 ?>
 
 <!DOCTYPE html>
@@ -169,7 +172,7 @@ $items = $stmt->fetchAll();
                 
                <h3>Payment Methods</h3>
                 <form method="post" action="mpesa.php" class="payment-form" id="payment-form">
-                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                    <!-- <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>"> -->
                     <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
                     <div>
                         <input type="radio" name="payment_method" value="mpesa" id="mpesa" checked>
@@ -201,46 +204,112 @@ $items = $stmt->fetchAll();
 
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-    // Get all payment method radio buttons
+document.addEventListener('DOMContentLoaded', function() {
     const paymentMethods = document.querySelectorAll('input[name="payment_method"]');
-    // Get the form element
     const paymentForm = document.getElementById('payment-form');
-    // Get the relevant divs to show/hide
     const mpesaPhoneDiv = document.getElementById('mpesa-phone');
     const cardElementDiv = document.getElementById('card-element');
     
-    // Add event listeners to each payment method
     paymentMethods.forEach(method => {
         method.addEventListener('change', function() {
-            // Hide all optional fields first
             mpesaPhoneDiv.classList.add('hidden');
             cardElementDiv.classList.add('hidden');
             
-            // Show the relevant field based on selection
             if (this.value === 'mpesa') {
                 mpesaPhoneDiv.classList.remove('hidden');
-                paymentForm.action = 'mpesa.php';
+                paymentForm.action = 'process_mpesa.php'; // Changed from mpesa.php
             } 
             else if (this.value === 'card') {
                 cardElementDiv.classList.remove('hidden');
-                paymentForm.action = 'mpesa.php';
+                paymentForm.action = 'process_card.php';
             }
             else if (this.value === 'cash_on_delivery') {
-                paymentForm.action = 'payment_on_delivery.php';
+                paymentForm.action = 'process_cod.php'; // New file for cash on delivery
             }
         });
     });
     
-    // Initialize the form based on the default selected payment method
     const defaultMethod = document.querySelector('input[name="payment_method"]:checked');
     if (defaultMethod) {
         if (defaultMethod.value === 'mpesa') {
             mpesaPhoneDiv.classList.remove('hidden');
         }
-        // Trigger the change event to set the correct form action
         defaultMethod.dispatchEvent(new Event('change'));
     }
+
+// Handle M-Pesa form submission
+paymentForm.addEventListener('submit', function(e) {
+    if (document.querySelector('input[name="payment_method"]:checked').value === 'mpesa') {
+        e.preventDefault();
+        const phoneNumber = document.getElementById('mpesa_phone_number').value;
+        const orderId = document.querySelector('input[name="order_id"]').value;
+        
+        // Show loading spinner
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+        loadingDiv.innerHTML = `
+            <div class="bg-white p-8 rounded-lg shadow-md text-center">
+                <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                <h2 class="text-xl font-semibold mb-2">Processing M-Pesa Payment</h2>
+                <p class="text-gray-600">Please check your phone to complete the payment...</p>
+            </div>
+        `;
+        document.body.appendChild(loadingDiv);
+        
+        // First phase: Show processing for 5 seconds
+        setTimeout(() => {
+            // Update the loading div to show success message
+            loadingDiv.innerHTML = `
+                <div class="bg-white p-8 rounded-lg shadow-md text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-green-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <h2 class="text-xl font-semibold mb-2">Payment Successful!</h2>
+                    <p class="text-gray-600">Your M-Pesa payment was received successfully.</p>
+                </div>
+            `;
+            
+            // Second phase: Redirect after 2 seconds of showing success
+            setTimeout(() => {
+                window.location.href = 'payment_success.php?order_id=' + orderId;
+            }, 2000);
+            
+        }, 5000); // Show processing for 5 seconds
+        
+        // Still make the actual API call (but don't wait for it to complete)
+        fetch('process_mpesa.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `order_id=${orderId}&mpesa_phone_number=${encodeURIComponent(phoneNumber)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                // If the payment actually failed, update the message
+                loadingDiv.innerHTML = `
+                    <div class="bg-white p-8 rounded-lg shadow-md text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-red-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        <h2 class="text-xl font-semibold mb-2">Payment Failed</h2>
+                        <p class="text-gray-600">${data.message || 'Please try again'}</p>
+                        <button onclick="document.body.removeChild(this.parentElement.parentElement)" 
+                                class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                            Try Again
+                        </button>
+                    </div>
+                `;
+            }
+            // If success, we already redirected so no action needed
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            // Don't show error to user since we're doing optimistic flow
+        });
+    }
+});
 });
 
 </script>

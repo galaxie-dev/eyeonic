@@ -18,7 +18,7 @@
 }
 .search-form {
     max-width: 600px;
-    margin: 0 auto 0.6rem auto;
+    margin: 0 auto 0.4rem auto;
     position: relative;
     display: flex;
 }

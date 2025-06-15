@@ -84,7 +84,7 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
 
     <main>
         <!-- Hero Carousel -->
-        <section class="splide" aria-label="Eyeonic Hero Carousel">
+         <section class="splide" aria-label="Eyeonic Hero Carousel">
          
             
             <div class="splide__track">
@@ -94,7 +94,7 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
                         <div class="hero-content">
                             <h1 class="hero-title">See the world <span>in a new light</span></h1>
                             <p class="hero-subtitle">Discover our curated collection of spectacles, designed for clarity, comfort, and style. Find your perfect pair today.</p>
-                            <a href="products.php"><button class="btn-shop" type="button">Shop Now</button></a>
+                            <a href="public/products.php"><button class="btn-shop" type="button">Shop Now</button></a>
                         </div>
                     </li>
                     <li class="splide__slide">                     
@@ -102,15 +102,7 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
                         <div class="hero-content">
                             <h1 class="hero-title">Premium Eyewear <span>for Everyone</span></h1>
                             <p class="hero-subtitle">From classic designs to modern trends, we have frames to suit every face and style.</p>
-                             <a href="products.php"><button class="btn-shop" type="button">Browse Collection</button></a>
-                        </div>
-                    </li>
-                       <li class="splide__slide">                     
-                        <img alt="Happy customer with new glasses" class="hero-image"  src="img/johncena.jpg" />
-                        <div class="hero-content">
-                            <h1 class="hero-title">Can You <span>See Me?</span></h1>
-                            <p class="hero-subtitle">Limited time offer on selected frames. Don't miss out on these amazing deals!</p>
-                             <a href="products.php"><button class="btn-shop" type="button">Lets see how you can see</button></a>
+                             <a href="public/products.php"><button class="btn-shop" type="button">Browse Collection</button></a>
                         </div>
                     </li>
                     <li class="splide__slide">                     
@@ -118,14 +110,16 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
                         <div class="hero-content">
                             <h1 class="hero-title">Summer Sale <span>Up to 50% Off</span></h1>
                             <p class="hero-subtitle">Limited time offer on selected frames. Don't miss out on these amazing deals!</p>
-                             <a href="products.php"><button class="btn-shop" type="button">View Lasting offers</button></a>
+                             <a href="public/products.php"><button class="btn-shop" type="button">View Lasting offers</button></a>
                         </div>
                     </li>
                 </ul>
             </div>
         </section>
 
-                <!-- Featured Products Section -->
+        <?php include 'categories.php'; ?>
+      
+        <!-- Featured Products Section -->
         <section class="products-section">
             <?php include 'search-bar.php'; ?>
             <h2 class="products-title">Featured Products</h2>
@@ -165,13 +159,13 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <circle cx="12" cy="12" r="5"></circle>
                                         </svg>
-                                        <?php echo htmlspecialchars($product['category_name'] ?? 'Uncategorized'); ?>
+                                        <?php echo htmlspecialchars(substr($product['category_name'], 0, 10 ?? 'Uncategorized')); ?>
+
+                                       
                                     </div>
                                     <div class="feature">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M17 18a5 5 0 0 0-10 0"></path>
-                                        </svg>
-                                        <?php echo date('M j, Y', strtotime($product['created_at'])); ?>
+                                        <i class="fas fa-calendar-alt"></i>
+                                        <?php echo date(' M j, Y', strtotime($product[ 'created_at'])); ?>
                                     </div>
                                 </div>
                                 
@@ -187,7 +181,7 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
                                         <span class="text">Add to Cart</span>
                                     </a>
                                     <a href="product_details.php?id=<?php echo $product['id']; ?>" class="view-details">
-                                        <span class="text">Details</span>
+                                        <span class="text">View Details</span>
                                     </a>
                                 </div>
                             </div>
@@ -202,58 +196,77 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
 
         <!-- Eyewear Advice Section -->
 <section class="eyewear-advice">
-    <div class="advice-container">
-        <h2 class="section-title">Eyewear Buying Guide</h2>
-        <p class="section-subtitle">Expert advice to help you find your perfect pair</p>
+    <div class="advice-container">      
+            <h2 class="section-title">Guide Your Eye</h2>
+            <p class="section-subtitle">Expert advice to help you find your perfect pair</p>
+           
+        
         
         <div class="advice-grid">
             <!-- Frame Selection Advice -->
             <div class="advice-card">
-                <div class="advice-icon">
-                    <i class="fas fa-glasses"></i>
+                <div class="card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <circle cx="12" cy="12" r="4"></circle>
+                        <line x1="4.93" y1="4.93" x2="9.17" y2="9.17"></line>
+                        <line x1="14.83" y1="14.83" x2="19.07" y2="19.07"></line>
+                        <line x1="14.83" y1="9.17" x2="19.07" y2="4.93"></line>
+                        <line x1="4.93" y1="19.07" x2="9.17" y2="14.83"></line>
+                    </svg>
                 </div>
                 <h3>Choosing the Right Frames</h3>
                 <ul>
-                    <li>Match frame shape to your face shape</li>
-                    <li>Consider your skin tone for color selection</li>
-                    <li>Ensure proper bridge fit for comfort</li>
-                    <li>Think about your lifestyle needs</li>
+                    <li><span class="bullet-icon">→</span> Match frame shape to your face shape</li>
+                    <li><span class="bullet-icon">→</span> Consider your skin tone for color selection</li>
+                    <li><span class="bullet-icon">→</span> Ensure proper bridge fit for comfort</li>
+                    <li><span class="bullet-icon">→</span> Think about your lifestyle needs</li>
                 </ul>
-                <a href="#" class="learn-more">Read More</a>
+                <a href="products.php" class="learn-more">Discover your frame style <span class="arrow">→</span></a>
             </div>
             
             <!-- Lens Selection Advice -->
             <div class="advice-card">
-                <div class="advice-icon">
-                    <i class="fas fa-eye"></i>
+                <div class="card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
+                        <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
+                        <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+                        <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
+                    </svg>
                 </div>
                 <h3>Lens Options Explained</h3>
                 <ul>
-                    <li>Single vision vs. progressive lenses</li>
-                    <li>Anti-reflective coating benefits</li>
-                    <li>Blue light blocking technology</li>
-                    <li>Photochromic (transition) lenses</li>
+                    <li><span class="bullet-icon">→</span> Single vision vs. progressive lenses</li>
+                    <li><span class="bullet-icon">→</span> Anti-reflective coating benefits</li>
+                    <li><span class="bullet-icon">→</span> Blue light blocking technology</li>
+                    <li><span class="bullet-icon">→</span> Photochromic (transition) lenses</li>
                 </ul>
-                <a href="#" class="learn-more">Read More</a>
+                <a href="products.php" class="learn-more">Explore lens technology <span class="arrow">→</span></a>
             </div>
             
             <!-- Eye Health Tips -->
             <div class="advice-card">
-                <div class="advice-icon">
-                    <i class="fas fa-heartbeat"></i>
+                <div class="card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                    </svg>
                 </div>
                 <h3>Eye Health Tips</h3>
                 <ul>
-                    <li>Get regular eye exams</li>
-                    <li>Follow the 20-20-20 rule for digital strain</li>
-                    <li>Wear UV-protective sunglasses outdoors</li>
-                    <li>Keep lenses clean for optimal vision</li>
+                    <li><span class="bullet-icon">→</span> Get regular eye exams</li>
+                    <li><span class="bullet-icon">→</span> Follow the 20-20-20 rule for digital strain</li>
+                    <li><span class="bullet-icon">→</span> Wear UV-protective sunglasses outdoors</li>
+                    <li><span class="bullet-icon">→</span> Keep lenses clean for optimal vision</li>
                 </ul>
-                <a href="#" class="learn-more">Read More</a>
+                <a href="products.php" class="learn-more">Learn eye care essentials <span class="arrow">→</span></a>
             </div>
         </div>
     </div>
 </section>
+
+
 
 <!-- Customer Testimonials -->
 <section class="testimonials">
@@ -271,8 +284,8 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
                 </div>
                 <p>"The most comfortable glasses I've ever worn. Perfect for my active lifestyle!"</p>
                 <div class="customer">
-                    <img src="img/customer1.jpg" alt="Sarah J.">
-                    <span>Sarah J.</span>
+                    <img src="img/catt7.png" alt="Sarah">
+                    <span>Sarah</span>
                 </div>
             </div>
             
@@ -286,8 +299,8 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
                 </div>
                 <p>"Great selection of frames and the blue light lenses have reduced my eye strain significantly."</p>
                 <div class="customer">
-                    <img src="img/customer2.jpg" alt="Michael T.">
-                    <span>Michael T.</span>
+                    <img src="img/catt6.png" alt="Michael">
+                    <span>Michael</span>
                 </div>
             </div>
             
@@ -301,54 +314,15 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
                 </div>
                 <p>"Fast shipping and excellent customer service when I needed an adjustment."</p>
                 <div class="customer">
-                    <img src="img/customer3.jpg" alt="Priya K.">
-                    <span>Priya K.</span>
+                    <img src="img/catt5.png" alt="Monique">
+                    <span>Monique</span>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Eye Care Services -->
-<section class="services">
-    <div class="services-container">
-        <h2 class="section-title">Our Eye Care Services</h2>
-        
-        <div class="services-grid">
-            <div class="service-card">
-                <div class="service-icon">
-                    <i class="fas fa-eye-dropper"></i>
-                </div>
-                <h3>Prescription Lenses</h3>
-                <p>Precision-crafted lenses tailored to your vision needs with the latest optical technology.</p>
-            </div>
-            
-            <div class="service-card">
-                <div class="service-icon">
-                    <i class="fas fa-sun"></i>
-                </div>
-                <h3>Sunglasses</h3>
-                <p>100% UV protection with prescription options available in stylish designer frames.</p>
-            </div>
-            
-            <div class="service-card">
-                <div class="service-icon">
-                    <i class="fas fa-desktop"></i>
-                </div>
-                <h3>Computer Glasses</h3>
-                <p>Specialized lenses to reduce digital eye strain and block harmful blue light.</p>
-            </div>
-            
-            <div class="service-card">
-                <div class="service-icon">
-                    <i class="fas fa-child"></i>
-                </div>
-                <h3>Kids' Eyewear</h3>
-                <p>Durable, comfortable frames designed for active children with impact-resistant lenses.</p>
-            </div>
-        </div>
-    </div>
-</section>
+
     </main>
 
             <section class="commitment-section">
@@ -410,6 +384,20 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
 </div>
 
     <!-- Splide Carousel JS -->
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Splide carousel
+        new Splide('.splide', {
+            type: 'loop',
+            autoplay: true,
+            interval: 5000,
+            pauseOnHover: false,
+            arrows: true,
+            pagination: true,
+        }).mount();
+    });
+</script>
     <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/js/splide.min.js"></script>
     <script>
         // Update cart and wishlist counts on page load

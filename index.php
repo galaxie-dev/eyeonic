@@ -83,14 +83,6 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
                              <a href="public/products.php"><button class="btn-shop" type="button">Browse Collection</button></a>
                         </div>
                     </li>
-                       <li class="splide__slide">                     
-                        <img alt="Happy customer with new glasses" class="hero-image"  src="public/img/johncena.jpg" />
-                        <div class="hero-content">
-                            <h1 class="hero-title">Can You <span>See Me?</span></h1>
-                            <p class="hero-subtitle">Limited time offer on selected frames. Don't miss out on these amazing deals!</p>
-                             <a href="public/products.php"><button class="btn-shop" type="button">Lets see how you can see</button></a>
-                        </div>
-                    </li>
                     <li class="splide__slide">                     
                         <img alt="Happy customer with new glasses" class="hero-image"  src="public/img/twoppl2.jpg" />
                         <div class="hero-content">
