@@ -97,6 +97,12 @@
                     </a>
                 </div>
             </div>
+
+              <div class="footer-brand">
+                <p class="footer-copyright"> Built and Designed by: <a href="https://evansosumba.vercel.app" target="_blank"> <span class="footer-year">Evans Osumba</span></a></p>
+                <!-- <p class="footer-rights">All rights reserved</p> -->
+                
+            </div>
             
           
         </div>
