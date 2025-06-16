@@ -1,6 +1,6 @@
 <?php
-require_once '../config/database.php';
-session_start();
+include 'header.php';
+// require_once '../config/database.php';
 
 
 // Redirect if not logged in
@@ -96,6 +96,8 @@ function calculateDeliveryFee($total) {
     if ($total < 1000) return 200;
     if ($total < 5000) return 500;
     return 1000;
+
+    
 }
 
 // Fetch cart items for display
@@ -126,7 +128,7 @@ if (!empty($cart)) {
 $deliveryFee = calculateDeliveryFee($productTotal);
 $total = $productTotal + $deliveryFee;
 
-include 'header.php';
+
 ?>
 
 <!DOCTYPE html>
