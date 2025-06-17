@@ -355,6 +355,8 @@ body {
 </head>
 <body>
 
+
+
     <main>
         <section class="product-detail-section">
             <?php if (isset($_SESSION['cart_message'])): ?>

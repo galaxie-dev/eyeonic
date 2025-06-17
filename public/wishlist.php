@@ -77,6 +77,7 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
             padding: 2rem;
             color: #6b7280;
         }
+        
     </style>
 </head>
 <body>
@@ -237,8 +238,7 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
                 });
         }
     </script>
-</body>
 <?php include 'mobile-menu.php'; ?>
-</html>
-
 <?php include 'footer.php'; ?>
+</body>
+</html>

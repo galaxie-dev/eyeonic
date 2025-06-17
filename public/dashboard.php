@@ -360,6 +360,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 display: none;
             }
         }
+
+
+        /* Mobile Logout Button */
+            .mobile-logout-btn {
+                display: none;
+                position: fixed;
+                bottom: 100px;
+                right: 20px;
+                background-color: var(--primary);
+                color: white;
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                z-index: 999;
+            }
+
+            @media (min-width: 768px) {
+                .mobile-logout-btn {
+                    display: none;
+                }
+            }
     </style>
 </head>
 <body>
@@ -513,6 +538,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </form>
         </div>
     </div>
+
+    <!-- Mobile Logout Button -->
+<a href="logout.php" class="mobile-logout-btn">
+    <i class="fas fa-sign-out-alt"></i>
+</a>
     
     
     <script>

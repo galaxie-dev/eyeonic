@@ -1,5 +1,14 @@
 <?php 
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Clear invalid sessions
+if (isset($_SESSION['user_id']) && empty($_SESSION['user_id'])) {
+    session_unset();
+    session_destroy();
+}
+
 require_once '../config/database.php';
 
 // Check if user is logged in and get user data if they are
@@ -458,6 +467,17 @@ if(isset($_SESSION['user_id'])) {
                 margin: 0.25rem 0;
             }
         }
+
+
+
+        .nav-link.active {
+            color: var(--primary);
+        }
+
+        .nav-link.active::before {
+            width: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+        }
     </style>
 </head>
 <body>
@@ -480,18 +500,17 @@ if(isset($_SESSION['user_id'])) {
                 <a href="products.php" class="nav-link">
                     <i class="fas fa-glasses"></i>
                     <span>Shop</span>
-                </a>
-                <a href="wishlist.php" class="nav-link">
+                </a>             
+                <a href="<?php echo isset($_SESSION['user_id']) ? 'wishlist.php' : 'login.php?redirect=wishlist.php'; ?>" class="nav-link">
                     <i class="fas fa-heart"></i>
                     <span>Wishlist</span>
                     <span class="wishlist-count count-badge" style="display: none;">0</span>
                 </a>
-                <a href="cart.php" class="nav-link">
+                <a href="<?php echo isset($_SESSION['user_id']) ? 'cart.php' : 'login.php?redirect=cart.php'; ?>" class="nav-link">
                     <i class="fas fa-shopping-cart"></i>
                     <span>Cart</span>
                     <span class="cart-count count-badge" style="display: none;">0</span>
                 </a>
-
                 
                 <?php if(isset($_SESSION['user_id'])): ?>
                  
@@ -645,6 +664,32 @@ if(isset($_SESSION['user_id'])) {
                 document.querySelectorAll('.wishlist-count').forEach(el => {
                     el.textContent = data.count;
                     el.style.display = data.count > 0 ? 'flex' : 'none';
+                });
+            });
+
+
+
+            document.addEventListener('DOMContentLoaded', function() {
+                // Get current page URL
+                const currentUrl = window.location.href.split('/').pop();
+                
+                // Get all nav links
+                const navLinks = document.querySelectorAll('.nav-link');
+                
+                // Loop through each link
+                navLinks.forEach(link => {
+                    // Get link href and remove any query parameters
+                    const linkHref = link.getAttribute('href').split('?')[0];
+                    
+                    // Check if link href matches current page
+                    if (currentUrl === linkHref) {
+                        link.classList.add('active');
+                    }
+                    
+                    // Special case for index.php (home page)
+                    if (currentUrl === '' && linkHref === 'index.php') {
+                        link.classList.add('active');
+                    }
                 });
             });
         <?php endif; ?>

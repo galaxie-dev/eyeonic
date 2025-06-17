@@ -167,16 +167,12 @@ if (empty($products)) {
                             
                             <div class="product-features">
                                 <div class="feature">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <circle cx="12" cy="12" r="5"></circle>
-                                    </svg>
-                                    <?php echo htmlspecialchars($product['category_name'] ?? 'Uncategorized'); ?>
+                                    <i class="fas fa-tag"> </i>
+                                    <?php echo htmlspecialchars($product[ 'category_name'] ?? 'Uncategorized'); ?>
                                 </div>
                                 <div class="feature">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M17 18a5 5 0 0 0-10 0"></path>
-                                    </svg>
-                                    <?php echo date('M j, Y', strtotime($product['created_at'])); ?>
+                                     <i class="fas fa-calendar-alt"> </i>
+                                    <?php echo date(' M j, Y', strtotime($product['created_at'])); ?>
                                 </div>
                             </div>
                             
