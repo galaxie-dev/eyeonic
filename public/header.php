@@ -3,6 +3,13 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Database connection
+// $host = 'sql307.infinityfree.com';
+// $db   = 'if0_39115861_eyeonic';
+// $user = 'if0_39115861';
+// $pass = 'QPDY35CzNmhsUMy';
+// $charset = 'utf8mb4'; 
+
 // Clear invalid sessions
 if (isset($_SESSION['user_id']) && empty($_SESSION['user_id'])) {
     session_unset();
@@ -20,12 +27,7 @@ require_once '../config/database.php';
 // $pass = '';
 // $charset = 'utf8mb4'; 
 
-// Database connection
-// $host = 'sql307.infinityfree.com';
-// $db   = 'if0_39115861_eyeonic';
-// $user = 'if0_39115861';
-// $pass = 'QPDY35CzNmhsUMy';
-// $charset = 'utf8mb4'; 
+
 
 
 

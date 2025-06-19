@@ -81,7 +81,7 @@ CREATE TABLE orders (
     FOREIGN KEY (user_id) REFERENCES users(id)
     ALTER TABLE orders ADD COLUMN payment_method VARCHAR(50) DEFAULT NULL;
 );
--- ALTER TABLE orders ADD COLUMN payment_status ENUM('pending', 'paid', 'failed') DEFAULT 'pending';
+
 
 
 
@@ -173,7 +173,7 @@ CREATE TABLE mpesa_transactions (
 
 INSERT INTO admins (full_name, email, password_hash)
 VALUES (
-    'Admin User',
+    'Eyeonic Admin',
     'admin@eyeonic.com',
     -- hasshed password is admin123
     '$2y$10$WzDjZkDvjE.EcML5lU5mNeP6JqGnRNEPh8LdCekyRg59aS9py5TuW' 
