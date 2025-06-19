@@ -109,7 +109,7 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
                         <div class="hero-content">
                             <h1 class="hero-title">See the world <span>in a new light</span></h1>
                             <p class="hero-subtitle">Discover our curated collection of spectacles, designed for clarity, comfort, and style. Find your perfect pair today.</p>
-                            <a href="public/products.php"><button class="btn-shop" type="button">Shop Now</button></a>
+                            <a href="products.php"><button class="btn-shop" type="button">Shop Now</button></a>
                         </div>
                     </li>
                     <li class="splide__slide">                     
@@ -117,7 +117,7 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
                         <div class="hero-content">
                             <h1 class="hero-title">Premium Eyewear <span>for Everyone</span></h1>
                             <p class="hero-subtitle">From classic designs to modern trends, we have frames to suit every face and style.</p>
-                             <a href="public/products.php"><button class="btn-shop" type="button">Browse Collection</button></a>
+                             <a href="products.php"><button class="btn-shop" type="button">Browse Collection</button></a>
                         </div>
                     </li>
                     <li class="splide__slide">                     
@@ -125,7 +125,7 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
                         <div class="hero-content">
                             <h1 class="hero-title">Summer Sale <span>Up to 50% Off</span></h1>
                             <p class="hero-subtitle">Limited time offer on selected frames. Don't miss out on these amazing deals!</p>
-                             <a href="public/products.php"><button class="btn-shop" type="button">View Lasting offers</button></a>
+                             <a href="products.php"><button class="btn-shop" type="button">View Lasting offers</button></a>
                         </div>
                     </li>
                 </ul>
@@ -401,17 +401,24 @@ function calculateDiscountPercentage($originalPrice, $discountPrice) {
     <!-- Splide Carousel JS -->
 
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize Splide carousel
-        new Splide('.splide', {
-            type: 'loop',
-            autoplay: true,
-            interval: 5000,
-            pauseOnHover: false,
-            arrows: true,
-            pagination: true,
-        }).mount();
-    });
+        //initialise splide caurosell
+        document.addEventListener('DOMContentLoaded', function() {
+            new Splide('.splide', {
+                type: 'loop',
+                autoplay: true,
+                interval: 5000,
+                pauseOnHover: false,
+                arrows: true,
+                pagination: true,
+                breakpoints: {
+                    768: {
+                        arrows: true,
+                        pagination: true,
+                        height: '50vh'
+                    }
+                }
+            }).mount();
+        });
 </script>
     <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/js/splide.min.js"></script>
     <script>
