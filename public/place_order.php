@@ -1,163 +1,176 @@
 <?php
-// if (session_status() === PHP_SESSION_NONE) {
+if (session_status() === PHP_SESSION_NONE) {
     session_start();
-    require_once '../config/database.php';
-
-
-
-// Database connection
-$host = 'localhost';
-$db   = 'eyeonic';
-$user = 'root';
-$pass = '';
-$charset = 'utf8mb4'; 
-
-// Database connection
-// $host = 'sql307.infinityfree.com';
-// $db   = 'if0_39115861_eyeonic';
-// $user = 'if0_39115861';
-// $pass = 'QPDY35CzNmhsUMy';
-// $charset = 'utf8mb4'; 
-
-$options = [
-    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-];
-
-try {
-    $pdo = new PDO("mysql:host=$host;dbname=$db;charset=$charset", $user, $pass, $options);
-} catch (PDOException $e) {
-    die("DB connection failed: " . $e->getMessage());
 }
 
+// Include header at the top (as requested)
+include 'header.php';
 
+// Database connection
+require_once '../config/database.php';
 
-
-
-// Redirect if not logged in - must be before any output
+// Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: checkout.php');
+    // Use JavaScript redirect to avoid headers issue
+    echo '<script>window.location.href = "login.php?redirect=checkout.php";</script>';
     exit;
 }
-// Fetch user details from database
-$stmt = $pdo->prepare("SELECT name, email, phone, address, city, zip_code, country FROM users WHERE id = ?");
-$stmt->execute([$_SESSION['user_id']]);
-$user = $stmt->fetch();
 
-// Handle form submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $address = $_POST['address'];
-    $city = $_POST['city'];
-    $zipCode = $_POST['zip_code'];
-    $country = $_POST['country'];
-    $phone = $_POST['phone'];
-    $cart = $_SESSION['cart'] ?? [];
+// Fetch user details
+$userId = $_SESSION['user_id'];
+$userStmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
+$userStmt->execute([$userId]);
+$user = $userStmt->fetch();
 
-    if (empty($cart)) {
-        header('Location: checkout.php');
-        exit;
-    }
-
-    // Calculate product total
-    $productTotal = 0;
-    foreach ($cart as $id => $qty) {
-        $stmt = $pdo->prepare("SELECT price, discount_price FROM products WHERE id = ?");
-        $stmt->execute([$id]);
-        $product = $stmt->fetch();
-        $price = $product['discount_price'] && $product['discount_price'] < $product['price'] ? $product['discount_price'] : $product['price'];
-        $productTotal += $price * $qty;
-    }
-
-    // Calculate delivery fee based on product total
-    $deliveryFee = calculateDeliveryFee($productTotal);
-    $total = $productTotal + $deliveryFee;
-
-    // Build full address string
-    $fullAddress = "{$address}, {$city}, {$zipCode}, {$country}";
-
-    // Start transaction
-    $pdo->beginTransaction();
-
-    try {
-        // Insert order with processing status
-        $stmt = $pdo->prepare("INSERT INTO orders (user_id, total, delivery_fee, order_status, shipping_address, created_at) 
-                              VALUES (?, ?, ?, 'processing', ?, NOW())");
-        $stmt->execute([$_SESSION['user_id'], $total, $deliveryFee, $fullAddress]);
-
-        $orderId = $pdo->lastInsertId();
-
-        // Insert order items
-        foreach ($cart as $id => $qty) {
-            $stmt = $pdo->prepare("SELECT price, discount_price FROM products WHERE id = ?");
-            $stmt->execute([$id]);
-            $product = $stmt->fetch();
-            $price = $product['discount_price'] && $product['discount_price'] < $product['price'] ? $product['discount_price'] : $product['price'];
-            $stmt = $pdo->prepare("INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)");
-            $stmt->execute([$orderId, $id, $qty, $price]);
-        }
-
-        // Update user's address details if changed
-        if ($user['address'] != $address || $user['city'] != $city || $user['zip_code'] != $zipCode || $user['country'] != $country || $user['phone'] != $phone) {
-            $updateStmt = $pdo->prepare("UPDATE users SET address = ?, city = ?, zip_code = ?, country = ?, phone = ? WHERE id = ?");
-            $updateStmt->execute([$address, $city, $zipCode, $country, $phone, $_SESSION['user_id']]);
-        }
-
-        // Commit transaction
-        $pdo->commit();
-
-        // Clear cart only after successful order
-        $_SESSION['cart'] = [];
-
-        // Redirect to order confirmation
-        header("Location: checkout.php?order_id=$orderId");
-        exit;
-
-    } catch (Exception $e) {
-        // Rollback transaction on error
-        $pdo->rollBack();
-        // Handle error (you might want to log this and show an error message)
-        die("An error occurred while processing your order: " . $e->getMessage());
-    }
+if (!$user) {
+    session_destroy();
+    echo '<script>window.location.href = "login.php";</script>';
+    exit;
 }
 
-// Function to calculate delivery fee
-function calculateDeliveryFee($total) {
-    if ($total < 1000) return 200;
-    if ($total < 5000) return 500;
-    return 1000;
-
-
-}
-
-// Fetch cart items for display
+// Initialize variables
+$errors = [];
 $cart = $_SESSION['cart'] ?? [];
 $cartItems = [];
-$productTotal = 0;
+$subtotal = 0;
+$orderSuccess = false; // Flag to track successful order
+
+// Process cart items
 if (!empty($cart)) {
-    foreach ($cart as $id => $qty) {
+    foreach ($cart as $productId => $quantity) {
         $stmt = $pdo->prepare("SELECT id, name, price, discount_price, image_path FROM products WHERE id = ?");
-        $stmt->execute([$id]);
+        $stmt->execute([$productId]);
         $product = $stmt->fetch();
+        
         if ($product) {
-            $price = $product['discount_price'] && $product['discount_price'] < $product['price'] ? $product['discount_price'] : $product['price'];
-            $imagePath = !empty($product['image_path']) ? '../' . $product['image_path'] : '../assets/no-image.png';
+            // Use discount price if available and lower
+            $price = ($product['discount_price'] && $product['discount_price'] < $product['price']) 
+                   ? $product['discount_price'] 
+                   : $product['price'];
+            
+            $imagePath = !empty($product['image_path']) 
+                        ? '../' . $product['image_path'] 
+                        : '../assets/no-image.png';
+            
             $cartItems[] = [
                 'id' => $product['id'],
                 'name' => $product['name'],
                 'price' => $price,
-                'quantity' => $qty,
-                'subtotal' => $price * $qty,
+                'quantity' => $quantity,
+                'subtotal' => $price * $quantity,
                 'image' => $imagePath
             ];
-            $productTotal += $price * $qty;
+            
+            $subtotal += $price * $quantity;
         }
     }
 }
 
-$deliveryFee = calculateDeliveryFee($productTotal);
-$total = $productTotal + $deliveryFee;
+// Calculate delivery fee
+$deliveryFee = max(200, $subtotal * 0.1);
+$total = $subtotal + $deliveryFee;
 
-include 'header.php';
+// Handle form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Validate required fields
+    $requiredFields = ['address', 'city', 'zip_code', 'country', 'phone'];
+    foreach ($requiredFields as $field) {
+        if (empty($_POST[$field])) {
+            $errors[] = "Please fill in all required fields.";
+            break;
+        }
+    }
+    
+    // Sanitize inputs
+    $address = htmlspecialchars(trim($_POST['address']));
+    $city = htmlspecialchars(trim($_POST['city']));
+    $zipCode = htmlspecialchars(trim($_POST['zip_code']));
+    $country = htmlspecialchars(trim($_POST['country']));
+    $phone = filter_var($_POST['phone'], FILTER_SANITIZE_NUMBER_INT);
+    $paymentMethod = isset($_POST['payment_method']) ? htmlspecialchars(trim($_POST['payment_method'])) : 'M-Pesa';
+    
+    // Validate phone number
+    if (!preg_match('/^\+?\d{8,15}$/', $phone)) {
+        $errors[] = "Please enter a valid phone number.";
+    }
+    
+    // Validate payment method
+    $allowedMethods = ['M-Pesa', 'Cash on Delivery'];
+    if (!in_array($paymentMethod, $allowedMethods)) {
+        $errors[] = "Invalid payment method selected.";
+    }
+    
+    // Process order if no errors
+    if (empty($errors) && !empty($cartItems)) {
+        try {
+            $pdo->beginTransaction();
+            
+            // Update user details if changed
+            $updateFields = [];
+            $params = [];
+            
+            if ($user['address'] !== $address) {
+                $updateFields[] = "address = ?";
+                $params[] = $address;
+            }
+            
+            if ($user['city'] !== $city) {
+                $updateFields[] = "city = ?";
+                $params[] = $city;
+            }
+            
+            if ($user['zip_code'] !== $zipCode) {
+                $updateFields[] = "zip_code = ?";
+                $params[] = $zipCode;
+            }
+            
+            if ($user['country'] !== $country) {
+                $updateFields[] = "country = ?";
+                $params[] = $country;
+            }
+            
+            if ($user['phone'] !== $phone) {
+                $updateFields[] = "phone = ?";
+                $params[] = $phone;
+            }
+            
+            if (!empty($updateFields)) {
+                $params[] = $userId;
+                $updateStmt = $pdo->prepare("UPDATE users SET " . implode(', ', $updateFields) . " WHERE id = ?");
+                $updateStmt->execute($params);
+            }
+            
+            // Create order
+            $orderStmt = $pdo->prepare("INSERT INTO orders 
+                (user_id, total, delivery_fee, payment_method, order_status, shipping_address, created_at)
+                VALUES (?, ?, ?, ?, 'pending', ?, NOW())");
+            
+            $shippingAddress = "$address, $city, $zipCode, $country";
+            $orderStmt->execute([$userId, $total, $deliveryFee, $paymentMethod, $shippingAddress]);
+            $orderId = $pdo->lastInsertId();
+            
+            // Add order items
+            foreach ($cartItems as $item) {
+                $itemStmt = $pdo->prepare("INSERT INTO order_items 
+                    (order_id, product_id, quantity, price)
+                    VALUES (?, ?, ?, ?)");
+                $itemStmt->execute([$orderId, $item['id'], $item['quantity'], $item['price']]);
+            }
+            
+            $pdo->commit();
+            
+            // Clear cart and set success flag
+            unset($_SESSION['cart']);
+            $orderSuccess = true;
+            $redirectOrderId = $orderId; // Store order ID for redirect
+            
+        } catch (PDOException $e) {
+            $pdo->rollBack();
+            error_log("Order processing error: " . $e->getMessage());
+            $errors[] = "An error occurred while processing your order. Please try again.";
+        }
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -165,199 +178,243 @@ include 'header.php';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout - Eyeonic</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+    <title>Place Order - Eyeonic</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .checkout-container {
+        .order-container {
             max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
+            margin: 2rem auto;
+            padding: 0 1rem;
         }
-        .checkout-grid {
+        .order-grid {
             display: grid;
-            grid-template-columns: 1fr;
-            gap: 30px;
+            gap: 2rem;
         }
         @media (min-width: 1024px) {
-            .checkout-grid {
-                grid-template-columns: 2fr 1fr;
+            .order-grid {
+                grid-template-columns: 1fr 1fr;
             }
         }
-        .checkout-form {
+        .order-section {
             background: white;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 1.5rem;
         }
-        .checkout-form label {
-            display: block;
-            margin-bottom: 8px;
+        .order-title {
+            font-size: 1.5rem;
             font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #1e40af;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 0.5rem;
+        }
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
             color: #374151;
         }
-        .checkout-form input,
-        .checkout-form textarea,
-        .checkout-form select {
+        .form-input {
             width: 100%;
-            padding: 10px;
-            margin-bottom: 20px;
+            padding: 0.75rem;
             border: 1px solid #d1d5db;
-            border-radius: 6px;
-            font-size: 16px;
+            border-radius: 0.375rem;
+            font-size: 1rem;
         }
-        .checkout-form textarea {
-            height: 100px;
-            resize: vertical;
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
-        .btn-submit {
+        .btn-primary {
             background-color: #2563eb;
             color: white;
-            padding: 12px 20px;
+            padding: 0.75rem 1.5rem;
             border: none;
-            border-radius: 6px;
-            font-size: 16px;
+            border-radius: 0.375rem;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             width: 100%;
-            transition: background-color 0.3s;
+            transition: background-color 0.2s;
         }
-        .btn-submit:hover {
+        .btn-primary:hover {
             background-color: #1d4ed8;
-        }
-        .order-summary {
-            background: white;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-        .order-summary h3 {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #e5e7eb;
         }
         .cart-item {
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #f3f4f6;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e7eb;
         }
         .cart-item-img {
-            width: 60px;
-            height: 60px;
+            width: 80px;
+            height: 80px;
             object-fit: contain;
-            border-radius: 4px;
-            margin-right: 15px;
+            border-radius: 0.25rem;
+            margin-right: 1rem;
+            border: 1px solid #e5e7eb;
         }
         .cart-item-details {
             flex-grow: 1;
         }
         .cart-item-name {
             font-weight: 600;
-            margin-bottom: 5px;
+            margin-bottom: 0.25rem;
         }
         .cart-item-price {
             color: #6b7280;
-            font-size: 14px;
+            font-size: 0.875rem;
         }
-        .order-total {
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 1px solid #e5e7eb;
-            font-size: 18px;
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+        .summary-total {
             font-weight: 600;
+            font-size: 1.125rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e5e7eb;
+        }
+        .error-message {
+            color: #dc2626;
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            background-color: #fef2f2;
+            border-radius: 0.375rem;
+            border-left: 4px solid #dc2626;
         }
     </style>
 </head>
-
 <body>
-    <main>
-        <div class="checkout-container">
-            <h1 class="text-2xl font-bold mb-6">Checkout</h1>
-            
-            <?php if (empty($cart)): ?>
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <p>Your cart is empty. <a href="products.php" class="text-blue-600">Continue shopping</a>.</p>
-                </div>
-            <?php else: ?>
-                <div class="checkout-grid">
-                    <form action="place_order.php" method="post" class="checkout-form">
-                        <h2 class="text-xl font-bold mb-6">Shipping Information</h2>
-                        
-                        <div>
-                            <label for="name">Full Name</label>
-                            <input type="text" id="name" value="<?= htmlspecialchars($user['name']) ?>" readonly>
-                        </div>
-                        
-                        <div>
-                            <label for="email">Email</label>
-                            <input type="email" id="email" value="<?= htmlspecialchars($user['email']) ?>" readonly>
-                        </div>
-                        
-                        <div>
-                            <label for="phone">Phone Number</label>
-                            <input type="tel" id="phone" name="phone" value="<?= htmlspecialchars($user['phone']) ?>" required>
-                        </div>
-                        
-                        <div>
-                            <label for="address">Street Address</label>
-                            <textarea id="address" name="address" required><?= htmlspecialchars($user['address']) ?></textarea>
-                        </div>
-                        
-                        <div>
-                            <label for="city">City</label>
-                            <input type="text" id="city" name="city" value="<?= htmlspecialchars($user['city']) ?>" required>
-                        </div>
-                        
-                        <div>
-                            <label for="zip_code">ZIP/Postal Code</label>
-                            <input type="text" id="zip_code" name="zip_code" value="<?= htmlspecialchars($user['zip_code']) ?>" required>
-                        </div>
-                        
-                        <div>
-                            <label for="country">Country</label>
-                            <input type="text" id="country" name="country" value="<?= htmlspecialchars($user['country']) ?>" required>
-                        </div>
-                        
-                        <button type="submit" class="btn-submit">Place Order</button>
-                    </form>
+    <div class="order-container">
+        <h1 class="text-3xl font-bold mb-6 text-gray-800">Place Your Order</h1>
+        
+        <?php if ($orderSuccess): ?>
+            <div class="success-message">
+                <p>Order placed successfully! Redirecting to confirmation...</p>
+            </div>
+            <script>
+                // JavaScript redirect to checkout.php
+                setTimeout(() => {
+                    window.location.href = 'checkout.php?order_id=<?= $redirectOrderId ?>';
+                }, 1000); // Short delay to show success message
+            </script>
+        <?php endif; ?>
+        
+        <?php if (!empty($errors)): ?>
+            <div class="error-message">
+                <?php foreach ($errors as $error): ?>
+                    <p><?= htmlspecialchars($error) ?></p>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+        
+        <?php if (empty($cart)): ?>
+            <div class="order-section">
+                <p>Your cart is empty. <a href="products.php" class="text-blue-600 hover:underline">Continue shopping</a>.</p>
+            </div>
+        <?php else: ?>
+            <div class="order-grid">
+                <!-- Shipping Information Form -->
+                <div class="order-section">
+                    <h2 class="order-title">Shipping Information</h2>
                     
-                    <div class="order-summary">
-                        <h3>Order Summary</h3>
+                    <form method="POST" action="">
+                        <div class="form-group">
+                            <label for="name" class="form-label">Full Name</label>
+                            <input type="text" id="name" class="form-input" value="<?= htmlspecialchars($user['name']) ?>" readonly>
+                        </div>
                         
-                        <?php foreach ($cartItems as $item): ?>
-                            <div class="cart-item">
-                                <img src="<?= htmlspecialchars($item['image']) ?>" alt="<?= htmlspecialchars($item['name']) ?>" class="cart-item-img">
-                                <div class="cart-item-details">
-                                    <div class="cart-item-name"><?= htmlspecialchars($item['name']) ?></div>
-                                    <div class="cart-item-price">KES <?= number_format($item['price'], 2) ?> x <?= $item['quantity'] ?></div>
-                                </div>
-                                <div>KES <?= number_format($item['subtotal'], 2) ?></div>
+                        <div class="form-group">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" id="email" class="form-input" value="<?= htmlspecialchars($user['email']) ?>" readonly>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="phone" class="form-label">Phone Number *</label>
+                            <input type="tel" id="phone" name="phone" class="form-input" 
+                                   value="<?= htmlspecialchars($user['phone']) ?>" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="address" class="form-label">Street Address *</label>
+                            <textarea id="address" name="address" class="form-input" rows="3" required><?= htmlspecialchars($user['address']) ?></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="city" class="form-label">City *</label>
+                            <input type="text" id="city" name="city" class="form-input" 
+                                   value="<?= htmlspecialchars($user['city']) ?>" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="zip_code" class="form-label">ZIP/Postal Code *</label>
+                            <input type="text" id="zip_code" name="zip_code" class="form-input" 
+                                   value="<?= htmlspecialchars($user['zip_code']) ?>" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="country" class="form-label">Country *</label>
+                            <input type="text" id="country" name="country" class="form-input" 
+                                   value="<?= htmlspecialchars($user['country']) ?>" required>
+                        </div>
+                        
+                        <!-- Add payment method field -->
+                        <!-- <div class="form-group">
+                            <label for="payment_method" class="form-label">Payment Method *</label>
+                            <select id="payment_method" name="payment_method" class="form-input" required>
+                                <option value="M-Pesa" <?= $paymentMethod === 'M-Pesa' ? 'selected' : '' ?>>M-Pesa</option>
+                                <option value="Cash on Delivery" <?= $paymentMethod === 'Cash on Delivery' ? 'selected' : '' ?>>Cash on Delivery</option>
+                            </select>
+                        </div> -->
+                        
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-shopping-bag mr-2"></i> Place Order
+                        </button> 
+                    </form>
+                </div>
+                
+                <!-- Order Summary -->
+                <div class="order-section">
+                    <h2 class="order-title">Order Summary</h2>
+                    
+                    <?php foreach ($cartItems as $item): ?>
+                        <div class="cart-item">
+                            <img src="<?= htmlspecialchars($item['image']) ?>" alt="<?= htmlspecialchars($item['name']) ?>" class="cart-item-img">
+                            <div class="cart-item-details">
+                                <div class="cart-item-name"><?= htmlspecialchars($item['name']) ?></div>
+                                <div class="cart-item-price">KES <?= number_format($item['price'], 2) ?> × <?= $item['quantity'] ?></div>
                             </div>
-                        <?php endforeach; ?>
-                        
-                        <div class="cart-item">
-                            <div>Subtotal</div>
-                            <div>KES <?= number_format($productTotal, 2) ?></div>
+                            <div>KES <?= number_format($item['subtotal'], 2) ?></div>
                         </div>
-                        
-                        <div class="cart-item">
-                            <div>Delivery Fee</div>
-                            <div>KES <?= number_format($deliveryFee, 2) ?></div>
-                        </div>
-                        
-                        <div class="cart-item order-total">
-                            <div>Total</div>
-                            <div>KES <?= number_format($total, 2) ?></div>
-                        </div>
+                    <?php endforeach; ?>
+                    
+                    <div class="summary-row">
+                        <span>Subtotal</span>
+                        <span>KES <?= number_format($subtotal, 2) ?></span>
+                    </div>
+                    
+                    <div class="summary-row">
+                        <span>Delivery Fee</span>
+                        <span>KES <?= number_format($deliveryFee, 2) ?></span>
+                    </div>
+                    
+                    <div class="summary-row summary-total">
+                        <span>Total</span>
+                        <span>KES <?= number_format($total, 2) ?></span>
                     </div>
                 </div>
-            <?php endif; ?>
-        </div>
-    </main>
+            </div>
+        <?php endif; ?>
+    </div>
     
     <?php include 'footer.php'; ?>
 </body>

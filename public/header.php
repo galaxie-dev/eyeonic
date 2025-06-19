@@ -11,6 +11,26 @@ if (isset($_SESSION['user_id']) && empty($_SESSION['user_id'])) {
 
 require_once '../config/database.php';
 
+
+
+// Database connection
+// $host = 'localhost';
+// $db   = 'eyeonic';
+// $user = 'root';
+// $pass = '';
+// $charset = 'utf8mb4'; 
+
+// Database connection
+// $host = 'sql307.infinityfree.com';
+// $db   = 'if0_39115861_eyeonic';
+// $user = 'if0_39115861';
+// $pass = 'QPDY35CzNmhsUMy';
+// $charset = 'utf8mb4'; 
+
+
+
+
+
 // Check if user is logged in and get user data if they are
 $userInitial = '';
 if(isset($_SESSION['user_id'])) {
@@ -26,7 +46,7 @@ if(isset($_SESSION['user_id'])) {
 ?>
 
 
-<!DOCTYPE html>
+<!-- <!DOCTYPE html> -->
 <html lang="en">
 <head>
     <meta charset="utf-8"/>
@@ -695,4 +715,4 @@ if(isset($_SESSION['user_id'])) {
         <?php endif; ?>
     </script>
 </body>
-</html>
+<!-- </html> -->

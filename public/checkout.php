@@ -1,18 +1,29 @@
 <?php
-require_once '../config/database.php';
-require_once '../mpesa-php-sdk/src/Mpesa.php';
-require_once '../vendor/autoload.php';
 
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
+// var_dump($_GET, $_SESSION);
+// exit;
 
-$mpesa = new Safaricom\Mpesa\Mpesa();
 
 // Verify IF order exists and IT belongs to the user
 if (!isset($_GET['order_id']) || !isset($_SESSION['user_id'])) {
     header('Location: cart.php');
     exit;
 }
+
+
+include 'header.php';
+
+// require_once '../mpesa-php-sdk/src/Mpesa.php';
+// require_once '../vendor/autoload.php';
+
+
+// $mpesa = new Safaricom\Mpesa\Mpesa();
+
+
 
 $orderId = (int)$_GET['order_id'];
 $stmt = $pdo->prepare("
@@ -40,7 +51,7 @@ $stmt->execute([$orderId]);
 $items = $stmt->fetchAll();
 
 
-include 'header.php';
+
 ?>
 
 <!DOCTYPE html>
@@ -121,7 +132,7 @@ include 'header.php';
         .btn-payment:hover {
             background-color: #1d4ed8;
         }
-        <style>
+    
     .hidden {
         display: none;
     }
@@ -135,7 +146,7 @@ include 'header.php';
     display: none;
 }
 </style>
-    </style>
+    
 </head>
 <body>
     <main>
