@@ -1,15 +1,44 @@
 <?php
-include 'header.php';
-// require_once '../config/database.php';
+// if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+    require_once '../config/database.php';
 
 
-// Redirect if not logged in
-if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
-    exit;
+
+// Database connection
+$host = 'localhost';
+$db   = 'eyeonic';
+$user = 'root';
+$pass = '';
+$charset = 'utf8mb4'; 
+
+// Database connection
+// $host = 'sql307.infinityfree.com';
+// $db   = 'if0_39115861_eyeonic';
+// $user = 'if0_39115861';
+// $pass = 'QPDY35CzNmhsUMy';
+// $charset = 'utf8mb4'; 
+
+$options = [
+    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+];
+
+try {
+    $pdo = new PDO("mysql:host=$host;dbname=$db;charset=$charset", $user, $pass, $options);
+} catch (PDOException $e) {
+    die("DB connection failed: " . $e->getMessage());
 }
 
 
+
+
+
+// Redirect if not logged in - must be before any output
+if (!isset($_SESSION['user_id'])) {
+    header('Location: checkout.php');
+    exit;
+}
 // Fetch user details from database
 $stmt = $pdo->prepare("SELECT name, email, phone, address, city, zip_code, country FROM users WHERE id = ?");
 $stmt->execute([$_SESSION['user_id']]);
@@ -97,7 +126,7 @@ function calculateDeliveryFee($total) {
     if ($total < 5000) return 500;
     return 1000;
 
-    
+
 }
 
 // Fetch cart items for display
@@ -128,7 +157,7 @@ if (!empty($cart)) {
 $deliveryFee = calculateDeliveryFee($productTotal);
 $total = $productTotal + $deliveryFee;
 
-
+include 'header.php';
 ?>
 
 <!DOCTYPE html>
