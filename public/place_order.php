@@ -272,6 +272,7 @@ include 'header.php';
         }
     </style>
 </head>
+
 <body>
     <main>
         <div class="checkout-container">
